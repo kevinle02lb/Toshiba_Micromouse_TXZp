@@ -10,8 +10,8 @@
  *   CTRLBASEPTR ignores bits [9:0].
  *
  *   Reference:
- *   - DMAC-B RM:    https://toshiba.semicon-storage.com/info/RM-DMAC-B_en_20241031.pdf
- *   - ARM PL230:    https://developer.arm.com/documentation/ddi0417
+ *   - DMAC-B RM:    https://toshiba.semicon-storage.com/info/RM-DMAC-B_en_20241031.pdf?did=160537
+ *   - ARM PL230:    https://developer.arm.com/documentation/ddi0417/a?lang=en
  *
  * @note
  *   File structure and Doxygen formatting assisted by AI.

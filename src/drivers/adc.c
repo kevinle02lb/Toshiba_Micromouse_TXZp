@@ -12,12 +12,22 @@
  *   - Unit A: PL0 (AINA16), PL1 (AINA15) — Left IR sensors
  *   - Unit C: PJ0 (AINC00), PJ1 (AINC01) — Right IR sensors
  *
- *   Reference:
- *   - Product Info:  https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf
- *   - ADC-I RM:     https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf
- *   - App Note:     https://toshiba.semicon-storage.com/info/COM_ADC_MON-ANE_application_note_en_20231016.pdf
+ *   Reference Documents (Toshiba):
+ *   - Product Info:  https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf?did=70854
+ *   - ADC-I RM:     https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf?did=166835
+ *   - EXCEPT-M4K(2) RM:    https://toshiba.semicon-storage.com/info/TXZP-EXCEPT-M4K(2)_en_20230414.pdf?did=70852
+ *   - App Note:     https://toshiba.semicon-storage.com/info/COM_ADC_MON-ANE_application_note_en_20231016.pdf?did=156383&prodName=TMPM4KNF10AFG
+ * 
+ *   Reference Documents (ARM — NVIC addresses and functions):
+ *   - core_cm4.h    — CMSIS NVIC helper functions (__NVIC_EnableIRQ, etc.)
+ *   - cmsis_gcc.h   — Compiler barriers and core register access
+ *   - startup_TMPM4KNA.s — Vector table with IRQ handler names
  *
  * @note
+ *   NVIC register names (ISER, ICER, IPR) are ARM standard.
+ *   Toshiba manual uses different names (<SETENA>, <CLRENA>, <PRI_n>).
+ *   See EXCEPT-M4K(2) §5.6 for the mapping.
+ *
  *   File structure and Doxygen formatting assisted by AI.
  *
  * Copyright (c) [Kevin Le] 2026
@@ -27,6 +37,34 @@
 #include "systick.h"
 #include "dma.h"
 
+/* ==========================================================================
+ *   INTERRUPT NOTES (Read this first)
+ * ==========================================================================
+ *
+ *   ADC single-conversion interrupts:
+ *     INTADASGL = IRQ #44  (ADC Unit A done)
+ *     INTADCSGL = IRQ #58  (ADC Unit C done)
+ *
+ *   These are "direct" interrupts (Route H in Toshiba §4.3.1).
+ *   They bypass INTIF and go straight to the NVIC.
+ *
+ *   To enable an interrupt manually (without CMSIS):
+ *     NVIC_ISER[IRQn >> 5] = (1UL << (IRQn & 0x1F));
+ *
+ *   NVIC base address: 0xE000E100 (ARM standard, not in Toshiba doc)
+ *   ISER offset: +0x000, ICER: +0x080, ICPR: +0x180, IPR: +0x300
+ *
+ *   To enable with CMSIS (recommended):
+ *     __NVIC_SetPriority(INTADASGL_IRQn, 5);
+ *     __NVIC_ClearPendingIRQ(INTADASGL_IRQn);
+ *     __NVIC_EnableIRQ(INTADASGL_IRQn);
+ *
+ *   CURRENTLY: DMA handles data movement. These interrupts are NOT enabled
+ *   in the NVIC, so the CPU never enters the handlers below.
+ *   The handlers are stubs for future use.
+ * ========================================================================== *
+
+ 
 /* ==========================================================================
  *   Initialization
  * ========================================================================== */
@@ -48,37 +86,65 @@ void ADC_Init(void)
  *   Follows Section 3.2.2 of the ADC-I RM for single-conversion setup.
  *   Steps: clock enable → disable ADEN → set prescaler → configure sampling
  *   time → set mode → program TSET registers → enable DMA request → enable ADC.
+ * 
+ *   Setup sequence per ADC-I Reference Manual:
+ *   1. Enable peripheral clock in CG->FSYSMENB
+ *   2. Disable ADC (ADEN=0) before changing config
+ *   3. Enable ADCLK in CG->SPCLKEN
+ *   4. Set prescaler (/4) and sampling time in CLK register
+ *   5. Enable ADC analog circuit (DACON=1), exit low-power (RCUT=0)
+ *   6. Wait 3 us for stabilization
+ *   7. Set MOD1/MOD2 for conversion timing
+ *   8. Configure TSET0/TSET1 — which channel goes to which result register
+ *   9. Enable DMA request (SGLDMEN)
+ *   10. Re-enable ADC (ADEN=1)
+ *
+ *   Result routing:
+ *     TSET0: AINA16 -> REG0
+ *     TSET1: AINA15 -> REG1, with interrupt flag (ENINTn)
  */
 void AINA_Init(void)
 {
-    /* [1] Clock configuration */
+    /* [1] Enable ADC Unit A peripheral clock */
     TSB_CG->FSYSMENB |= AINA_CG_FSYSMENB_IPMENB02;
-    TSB_ADA->CR0 &= ~ADxCR0_ADEN;                       /* Disable before config */
-    TSB_CG->SPCLKEN |= CG_CGSPCLKEN_ADCKEN0;            /* Enable ADCLK */
-    TSB_ADA->CLK &= ~ADxCLK_VADCLK_MASK;                /* Prescaler = /4 (3b000) */
+
+    /* [2] Disable ADC before configuration (ADEN must be 0 to change settings) */
+    TSB_ADA->CR0 &= ~ADxCR0_ADEN;
+
+    /* [3] Enable ADC conversion clock (ADCLK) */
+    TSB_CG->SPCLKEN |= CG_CGSPCLKEN_ADCKEN0;
+
+    /* [4] Set ADCLK prescaler = /4 (bits [2:0] = 000), sampling time for EXAZ0/EXAZ1 */
+    TSB_ADA->CLK &= ~ADxCLK_VADCLK_MASK;
     TSB_ADA->CLK |= ADXCLK_EXAZ0_40MHZ | ADXCLK_EXAZ1_40MHZ;
 
-    /* [2] ADC circuit configuration */
+    /* [5] Enable ADC analog circuit, exit low-power mode */
     TSB_ADA->MOD0 |= ADxMOD0_DACON;
     TSB_ADA->MOD0 &= ~ADxMOD0_RCUT;
-    SysTick_us(3U);                                     /* 3 µs stabilization */
 
-    /* Sampling & conversion time: 0.96 µs @ 40 MHz SCLK (RM Table 6-1) */
+    /* [6] Wait for analog stabilization (3 us minimum per datasheet) */
+    SysTick_us(3U);
+
+    /* [7] Set conversion timing: 0.96 us @ 40 MHz SCLK (RM Table 6-1) */
     TSB_ADA->MOD1 = ADxMOD1_40MHZ;
     TSB_ADA->MOD2 = 0;
 
-    /* Use EXAZ0 for both channels */
+    /* [8] Select EXAZ0 sampling time for both channels */
     TSB_ADA->EXAZSEL &= ~(ADxEXAZSEL_AINA15 | ADxEXAZSEL_AINA16);
 
-    /* [3] TSET — conversion program */
-    TSB_ADA->TSET0 = (ADxTSETn_TRGSn_SGL | ADxTSETn_AINSTn_AINx16);          /* AINA16 → REG0 */
+    /* [9] Program conversion sequence:
+     *   TSET0: AINA16 -> REG0 (single trigger, no interrupt flag)
+     *   TSET1: AINA15 -> REG1 (single trigger, WITH interrupt flag ENINT1)
+     *   ENINTn generates the DMA request / interrupt when this conversion completes
+     */
+    TSB_ADA->TSET0 = (ADxTSETn_TRGSn_SGL | ADxTSETn_AINSTn_AINx16);
     TSB_ADA->TSET1 = (ADxTSETn_TRGSn_SGL | ADxTSETn_AINSTn_AINx15 |
-                        ADxTSETn_ENINTn_MASK);                               /* AINA15 → REG1, INT */
+                        ADxTSETn_ENINTn_MASK);
 
-    /* [4] DMA request enable */
+    /* [10] Enable DMA request on single conversion complete */
     TSB_ADA->CR1 = ADxCR1_SGLDMEN;
 
-    /* [5] Enable ADC */
+    /* [11] Re-enable ADC to start operation */
     TSB_ADA->CR0 |= ADxCR0_ADEN;
 }
 
@@ -88,32 +154,45 @@ void AINA_Init(void)
  */
 void AINC_Init(void)
 {
-    /* [1] Clock configuration */
+    /* [1] Enable ADC Unit C peripheral clock */
     TSB_CG->FSYSMENB |= AINC_CG_FSYSMENB_IPMENB04;
+
+    /* [2] Disable ADC before configuration */
     TSB_ADC->CR0 &= ~ADxCR0_ADEN;
+
+    /* [3] Enable ADC conversion clock (ADCLK) */
     TSB_CG->SPCLKEN |= CG_CGSPCLKEN_ADCKEN2;
+
+    /* [4] Set ADCLK prescaler = /4, sampling time for EXAZ0/EXAZ1 */
     TSB_ADC->CLK &= ~ADxCLK_VADCLK_MASK;
     TSB_ADC->CLK |= ADXCLK_EXAZ0_40MHZ | ADXCLK_EXAZ1_40MHZ;
 
-    /* [2] ADC circuit configuration */
+    /* [5] Enable ADC analog circuit, exit low-power mode */
     TSB_ADC->MOD0 |= ADxMOD0_DACON;
     TSB_ADC->MOD0 &= ~ADxMOD0_RCUT;
+
+    /* [6] Wait for analog stabilization */
     SysTick_us(3U);
 
+    /* [7] Set conversion timing */
     TSB_ADC->MOD1 = ADxMOD1_40MHZ;
     TSB_ADC->MOD2 = 0;
 
+    /* [8] Select EXAZ0 sampling time for both channels */
     TSB_ADC->EXAZSEL &= ~(ADxEXAZSEL_AINC00 | ADxEXAZSEL_AINC01);
 
-    /* [3] TSET — conversion program */
-    TSB_ADC->TSET0 = (ADxTSETn_TRGSn_SGL | ADxTSETn_AINSTn_AINx01);          /* AINC01 → REG0 */
+    /* [9] Program conversion sequence:
+     *   TSET0: AINC01 -> REG0 (single trigger, no interrupt flag)
+     *   TSET1: AINC00 -> REG1 (single trigger, WITH interrupt flag ENINT1)
+     */
+    TSB_ADC->TSET0 = (ADxTSETn_TRGSn_SGL | ADxTSETn_AINSTn_AINx01);
     TSB_ADC->TSET1 = (ADxTSETn_TRGSn_SGL | ADxTSETn_AINSTn_AINx00 |
-                        ADxTSETn_ENINTn_MASK);                               /* AINC00 → REG1, INT */
+                        ADxTSETn_ENINTn_MASK);
 
-    /* [4] DMA request enable */
+    /* [10] Enable DMA request on single conversion complete */
     TSB_ADC->CR1 = ADxCR1_SGLDMEN;
 
-    /* [5] Enable ADC */
+    /* [11] Re-enable ADC to start operation */
     TSB_ADC->CR0 |= ADxCR0_ADEN;
 }
 
@@ -141,9 +220,15 @@ void AINC_StartSGL(void)
  * @brief  Start a paired ADC conversion with DMA re-arm.
  * @details
  *   Must be called every time fresh samples are needed.
- *   The PL230/DMAC-B controller invalidates (cycle_ctrl = 0) the channel
- *   control structure after each transfer, so @ref DMA_SetupForADC() is
- *   invoked first to restore the descriptors.
+ *   The PL230/DMAC-B controller invalidates (sets cycle_ctrl = 0) the channel
+ *   control structure after each transfer completes. Therefore,
+ *   @ref DMA_SetupForADC() must be called first to restore the descriptors.
+ *
+ *   Flow:
+ *   1. DMA_SetupForADC() restores cycle_ctrl for channels 16 & 18
+ *   2. AINA_StartSGL() triggers Unit A conversion
+ *   3. AINC_StartSGL() triggers Unit C conversion
+ *   4. DMA moves results to adc_a_buffer[] and adc_c_buffer[] without CPU
  */
 void Start_ADC(void)
 {
@@ -203,19 +288,43 @@ uint16_t AINC_Read(uint8_t channel)
  * ========================================================================== */
 
 /**
- * @brief  ADC Unit A single-conversion interrupt handler.
- * @note   Currently a stub. DMA handles the data movement; no CPU action required.
+ * @brief  ADC Unit A single-conversion interrupt handler (IRQ #44).
+ * @note   STUB — not currently enabled in NVIC.
+ *
+ *   To enable this interrupt:
+ *     __disable_irq();
+ *     __NVIC_SetPriority(INTADASGL_IRQn, 5);     // Priority 5 (0 = highest)
+ *     __NVIC_ClearPendingIRQ(INTADASGL_IRQn);    // Clear any stale pending
+ *     __NVIC_EnableIRQ(INTADASGL_IRQn);          // Set NVIC ISER bit 12
+ *     __enable_irq();
+ *
+ *   INTADASGL is a "direct" interrupt (Route H, §4.3.1) — no INTIF config needed.
+ *   If using DMA, the DMA controller handles data movement; this ISR is optional.
+ *   If NOT using DMA, read REG0/REG1 here and clear ADC status flags.
  */
 void INTADASGL_IRQHandler(void)
 {
-    /* Add acknowledge / flag-clear if needed by application layer */
+    /* TODO: Add application logic if interrupt is enabled */
+    /* If using DMA: DMA already moved data to adc_a_buffer[] */
+    /* If NOT using DMA: read TSB_ADA->REG0/REG1 here, then clear flags */
 }
 
 /**
- * @brief  ADC Unit C single-conversion interrupt handler.
- * @note   Currently a stub. DMA handles the data movement; no CPU action required.
+ * @brief  ADC Unit C single-conversion interrupt handler (IRQ #58).
+ * @note   STUB — not currently enabled in NVIC.
+ *
+ *   To enable this interrupt:
+ *     __disable_irq();
+ *     __NVIC_SetPriority(INTADCSGL_IRQn, 5);
+ *     __NVIC_ClearPendingIRQ(INTADCSGL_IRQn);
+ *     __NVIC_EnableIRQ(INTADCSGL_IRQn);          // Set NVIC ISER bit 26
+ *     __enable_irq();
+ *
+ *   INTADCSGL is a "direct" interrupt (Route H, §4.3.1) — no INTIF config needed.
  */
 void INTADCSGL_IRQHandler(void)
 {
-    /* Add acknowledge / flag-clear if needed by application layer */
+    /* TODO: Add application logic if interrupt is enabled */
+    /* If using DMA: DMA already moved data to adc_c_buffer[] */
+    /* If NOT using DMA: read TSB_ADC->REG0/REG1 here, then clear flags */
 }
