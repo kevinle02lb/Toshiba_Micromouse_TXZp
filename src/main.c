@@ -61,6 +61,8 @@
 #include "drivers/gpio.h"
 #include "drivers/timer32A.h"
 #include "drivers/encoder32A.h"
+#include "drivers/dma.h"
+#include "drivers/adc.h"
 
 
 int main()
@@ -69,7 +71,8 @@ int main()
 	GPIO_Init();								/* Initialize GPIO pins for motors, encoders, and IR sensors */
 	T32A_Init();
 	ENC32A_Init();
-
+	DMAC_Init();
+	ADC_Init();
 
 	while(1)
 	{

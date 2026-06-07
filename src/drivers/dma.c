@@ -14,6 +14,7 @@
  *  
  *  Target: Burst Mode only availiable for DMA for ADC
  *  ARM PrimeCell DMA (PL230) Architecture
+ *  Refer to 5.1. Basic Operation in DMAC-B datasheet
  * Copyright (c) [Kevin Le] 2026
  **************************************************************************
  */
@@ -81,6 +82,10 @@ void DMAC_Init(void)
  *     - 2 transfers, dst_end=&buffer[1], dst_inc=2:
  *       Xfer 1: &buffer[1] - (2-1)*2 = &buffer[0]
  *       Xfer 2: &buffer[1] - (1-1)*2 = &buffer[1]
+ * 
+ *   DMA_N_MINUS_1 Is used for "end address" arithmetic.
+ *   All info can be found in ARM PrimeCell DMA (PL230) Architecture. (ARM website)
+ *  @note After DMA cycle, cycle_ctrl enters invalid state/suspend state (Refer to ARM DMA Control) 
  */
 void DMA_SetupForADC(void)
 {
@@ -89,7 +94,7 @@ void DMA_SetupForADC(void)
                       | DMA_DST_SIZE_HWORD     /* dest: 16-bit writes - Destination of adc_x_buffer array */
                       | DMA_SRC_INC_WORD       /* src: +4 bytes (REG0 → REG1) */
                       | DMA_SRC_SIZE_HWORD     /* src: 16-bit reads (lower half of 32-bit reg) */
-                      | DMA_R_POWER_4          /* arbitrate after 4 transfers */
+                      | DMA_R_POWER_2          /* arbitrate after 2 transfers */
                       | DMA_N_MINUS_1(2)       /* 2 transfers total */
                       | DMA_NEXT_USEBURST      /* bit 3 = 1: force burst */
                       | DMA_CYCLE_CTRL_CNT;    /* cycle_ctrl = 010: Continuation Normal */

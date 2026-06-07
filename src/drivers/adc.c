@@ -167,13 +167,18 @@ void AINC_StartSGL(void)
 
 
 /* Start a conversion — DMA will automatically transfer results when done */
-void start_sampling(void)
+void Start_ADC(void)
 {
+    DMA_SetupForADC();  /* Re-arm DMA */
     AINA_StartSGL();    /* Writes ADACR0.SGL = 1 */
     AINC_StartSGL();    /* Writes ADCCR0.SGL = 1 */
 }
 
 
+/**
+ *  @brief Read ADC values only when DMA is not used
+ *  @details Returns 16 bit value from 12 bit ADC reg through bitmasking
+ */
 uint16_t AINA_Read(uint8_t channel)
 {
     uint16_t result = 0;
@@ -236,7 +241,7 @@ void INTADCSGL_IRQHandler(void)
 }
 
 
-
+// Will be transfered to IR sensor module instead of driver file
 // void process_results(void)
 // {
 //     volatile uint16_t* a_buf = DMA_GetADCABuffer();

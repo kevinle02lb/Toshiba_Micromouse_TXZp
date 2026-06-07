@@ -74,7 +74,7 @@ typedef struct
 #define DMA_N_MINUS_1(n)                            ((uint32_t)((n) - 1U) << 4U)
 
 /* next_useburst [3] - Single transfer setting change (Note4)*/
-#define DMA_NEXT_USEBURST                           ((uint32_t)0x01 << 3U)      /*!< Single transfer setting change */
+#define DMA_NEXT_USEBURST                           ((uint32_t)0x01 << 3U)      /*!< Single transfer setting change - Single or Burst */
 
 /* cycle_ctrl [2:0] - transfer mode */
 #define DMA_CYCLE_CTRL_SUSPEND                      ((uint32_t)0x0U << 0U)      /*!< Channel disabled      */

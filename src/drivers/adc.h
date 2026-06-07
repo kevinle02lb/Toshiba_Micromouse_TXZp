@@ -101,7 +101,7 @@ void AINC_Init(void);
 void AINA_StartSGL(void);
 void AINC_StartSGL(void);
 
-void start_sampling(void);
+void Start_ADC(void);
 
 uint16_t AINA_Read(uint8_t channel);
 uint16_t AINC_Read(uint8_t channel);
