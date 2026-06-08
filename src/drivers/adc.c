@@ -254,9 +254,12 @@ uint16_t AINA_Read(uint8_t channel)
     AINA_StartSGL();
     while (TSB_ADA->ST & ADxST_SNGF) { ; }
 
-    if (channel == 16) {
+    if (channel == 16) 
+    {
         result = (uint16_t)(TSB_ADA->REG0 & ADxREGn_ADRn);
-    } else if (channel == 15) {
+    } 
+    else if (channel == 15) 
+    {
         result = (uint16_t)(TSB_ADA->REG1 & ADxREGn_ADRn);
     }
     return result;
@@ -275,9 +278,12 @@ uint16_t AINC_Read(uint8_t channel)
     AINC_StartSGL();
     while (TSB_ADC->ST & ADxST_SNGF) { ; }
 
-    if (channel == 1) {
+    if (channel == 1) 
+    {
         result = (uint16_t)(TSB_ADC->REG0 & ADxREGn_ADRn);
-    } else if (channel == 0) {
+    } 
+    else if (channel == 0) 
+    {
         result = (uint16_t)(TSB_ADC->REG1 & ADxREGn_ADRn);
     }
     return result;

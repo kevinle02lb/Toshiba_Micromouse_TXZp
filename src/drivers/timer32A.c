@@ -7,6 +7,9 @@
  * @details
  *   Configures T32A channels 0 and 3 for PPG (PWM) output on motor drivers.
  *   16-bit mode, up-counting, double-buffered, 40 kHz @ 80 MHz / 1:1 prescaler.
+ * 
+ *   Configures T32A Channel 1 for Interval timer Interrupt
+ *   32-bit mode, up-counting, double-buffered, 1kHz @ 80 Mhz / 1:1 prescaler.
  *
  *   Pin Assignments:
  *   - T32A0: PA3 (OUTA), PA4 (OUTB) — Left motor
@@ -14,6 +17,7 @@
  *
  *   Reference:
  *   - RM-T32A-C: https://toshiba.semicon-storage.com/info/RM-T32A-C_en_20241129.pdf?did=160771
+ *   - EXCEPT-M4K(2) RM:    https://toshiba.semicon-storage.com/info/TXZP-EXCEPT-M4K(2)_en_20230414.pdf?did=70852
  *   - App Note:   https://toshiba.semicon-storage.com/info/COM_T32A_PPG-ANE_application_note_en_20240716.pdf?did=156401&prodName=TMPM4KNF10AFG
  *
  * @note
@@ -32,6 +36,7 @@ void T32A_Init(void)
 {
     T32A0_Init(T32A_CH0_PERIOD);   /* Left motor PWM */
     T32A3_Init(T32A_CH3_PERIOD);   /* Right motor PWM */
+    T32A1_Init();                  /* Interval Timer Interrupt */
 }
 
 /**
@@ -55,7 +60,8 @@ void T32A0_Init(uint16_t period)
     /* [1] Clock enable, stop timer */
     TSB_CG->FSYSMENA |= T32A0_CG_FSYSMENA_IPMENA28;
     TSB_T32A0->RUNA &= ~T32A_RUNx_MASK;
-    while (TSB_T32A0->RUNA & T32A_RUNx_RUNFLGx_MASK) { ; }   /* Wait for stop */
+    TSB_T32A0->RUNB &= ~T32A_RUNx_MASK;
+    while ((TSB_T32A0->RUNA & T32A_RUNx_RUNFLGx_MASK) || (TSB_T32A0->RUNB & T32A_RUNx_RUNFLGx_MASK)) { ; }   /* Wait for stop */
 
     /* [2] 16-bit mode */
     TSB_T32A0->MOD &= ~T32A_MODE_MASK;
@@ -68,7 +74,9 @@ void T32A0_Init(uint16_t period)
     TSB_T32A0->CRB |= T32A0_CRB_PRSCLB;
 
     TSB_T32A0->CRA &= ~T32A_CRx_UPDNx_MASK;
-    TSB_T32A0->CRA |= T32A_UPDNx;           /* Up-count */
+    TSB_T32A0->CRB &= ~T32A_CRx_UPDNx_MASK;     /* Up-count */
+    TSB_T32A0->CRA |= T32A_UPDNx;
+    TSB_T32A0->CRB |= T32A_UPDNx;           
 
     TSB_T32A0->CRA |= T32A_CRx_WBFx_MASK;    /* Double-buffer A */
     TSB_T32A0->CRB |= T32A_CRx_WBFx_MASK;    /* Double-buffer B */
@@ -83,8 +91,8 @@ void T32A0_Init(uint16_t period)
     /* [5] Compare values: RG0 = duty, RG1 = period */
     TSB_T32A0->RGA0 = 0;          /* 0% duty initially */
     TSB_T32A0->RGB0 = 0;
-    TSB_T32A0->RGA1 = period;     /* Period = PWM frequency */
-    TSB_T32A0->RGB1 = period;
+    TSB_T32A0->RGA1 = period - 1;     /* Period = PWM frequency */
+    TSB_T32A0->RGB1 = period - 1;
 
     /* [6] Output control: SET on CMP0, CLEAR on CMP1 */
     TSB_T32A0->OUTCRA0 &= ~T32A_OUTCRx0_ORCx_MASK;
@@ -106,7 +114,8 @@ void T32A3_Init(uint16_t period)
     /* [1] Clock enable, stop timer */
     TSB_CG->FSYSMENA |= T32A3_CG_FSYSMENA_IPMENA31;
     TSB_T32A3->RUNA &= ~T32A_RUNx_MASK;
-    while (TSB_T32A3->RUNA & T32A_RUNx_RUNFLGx_MASK) { ; }
+    TSB_T32A3->RUNB &= ~T32A_RUNx_MASK;
+    while ((TSB_T32A3->RUNA & T32A_RUNx_RUNFLGx_MASK) || (TSB_T32A3->RUNB & T32A_RUNx_RUNFLGx_MASK)) { ; }   /* Wait for stop */
 
     /* [2] 16-bit mode */
     TSB_T32A3->MOD &= ~T32A_MODE_MASK;
@@ -119,7 +128,9 @@ void T32A3_Init(uint16_t period)
     TSB_T32A3->CRB |= T32A3_CRB_PRSCLB;
 
     TSB_T32A3->CRA &= ~T32A_CRx_UPDNx_MASK;
+    TSB_T32A3->CRB &= ~T32A_CRx_UPDNx_MASK;
     TSB_T32A3->CRA |= T32A_UPDNx;
+    TSB_T32A3->CRB |= T32A_UPDNx;
 
     TSB_T32A3->CRA |= T32A_CRx_WBFx_MASK;
     TSB_T32A3->CRB |= T32A_CRx_WBFx_MASK;
@@ -134,8 +145,8 @@ void T32A3_Init(uint16_t period)
     /* [5] Compare values */
     TSB_T32A3->RGA0 = 0;
     TSB_T32A3->RGB0 = 0;
-    TSB_T32A3->RGA1 = period;
-    TSB_T32A3->RGB1 = period;
+    TSB_T32A3->RGA1 = period - 1;
+    TSB_T32A3->RGB1 = period - 1;
 
     /* [6] Output control: PPG mode */
     TSB_T32A3->OUTCRA0 &= ~T32A_OUTCRx0_ORCx_MASK;
@@ -147,14 +158,55 @@ void T32A3_Init(uint16_t period)
                          T32A_OUTPUT_PPG;
 }
 
+/**
+ * @brief  T32A1 — 1 kHz Control Loop Timer (Interval Timer, no output). Timer C (32-bit)
+ * @param
+ * @note   Timer for refresh/update. Interval Timer Configuration (5.1. Interval Timer)
+ */
+void T32A1_Init(void)
+{
+    /* [1] Clock Enable, stop timer */
+    TSB_CG->FSYSMENA |=T32A1_CG_FSYSMENA_IPMENA29;
+    TSB_T32A1->RUNC &= ~T32A_RUNx_MASK;
+    while ((TSB_T32A1->RUNC & T32A_RUNx_RUNFLGx_MASK)) { ; }   /* Wait for stop */
+
+    /* [2] 32-bit Mode */
+    TSB_T32A1->MOD &= ~T32A_MODE_MASK;
+    TSB_T32A1->MOD |= (T32A1_MODE_SEL & T32A_MODE_MASK);
+
+    /* [3] Prescaler, Direction, double-buffer */
+    TSB_T32A1->CRC &= ~T32A_CRx_PRSCLC_MASK;
+    TSB_T32A1->CRC |= T32A1_CRC_PRSCLC;
+
+    TSB_T32A1->CRC &= ~T32A_CRx_UPDNx_MASK;
+    
+    TSB_T32A1->CRC |= T32A_CRx_WBFx_MASK;
+
+    /* [4] Reload at RG1 match */
+    TSB_T32A1->CRC |= T32A_CRx_RELDx_MASK;
+    TSB_T32A1->RELDC = 0;
+
+    /* [5] Compare values */
+    TSB_T32A1->RGC0 = 0;
+    TSB_T32A1->RGC1 = T32A_CH1_1KHZ - 1;
+
+    /* [6] Interrupt */
+    T32A1_Interrupt_Enable();
+
+    /* Start */
+
+}
+
 /* ==========================================================================
  *   Run Control
  * ========================================================================== */
 
 void T32A0_Start(void)  { TSB_T32A0->RUNA |= T32A_RUNx_MASK; }
 void T32A3_Start(void)  { TSB_T32A3->RUNA |= T32A_RUNx_MASK; }
+void T32A1_Start(void)  { TSB_T32A1->RUNA |= T32A_RUNx_MASK; }
 void T32A0_Stop(void)   { TSB_T32A0->RUNA &= ~T32A_RUNx_MASK; }
 void T32A3_Stop(void)   { TSB_T32A3->RUNA &= ~T32A_RUNx_MASK; }
+void T32A1_Stop(void)   { TSB_T32A1->RUNC &= ~T32A_RUNx_MASK; }
 
 /* ==========================================================================
  *   Compare Value Setters (Duty Cycle)
@@ -171,7 +223,7 @@ void T32A3_SetTimerB0(uint16_t val)  { TSB_T32A3->RGB0 = val; }   /* Right B dut
 void T32A3_SetTimerB1(uint16_t val)  { TSB_T32A3->RGB1 = val; }   /* Right B period */
 
 /* ==========================================================================
- *   Output Control Setters
+ *   Output Control Setters (Direction)
  * ========================================================================== */
 
 void T32A0_SetOutCRA1(uint32_t mode)
@@ -192,4 +244,35 @@ void T32A3_SetOutCRA1(uint32_t mode)
 void T32A3_SetOutCRB1(uint32_t mode)
 {
     TSB_T32A3->OUTCRB1 = (TSB_T32A3->OUTCRB1 & ~T32A_OUTCRx1_MASK) | mode;
+}
+
+
+
+/* ==========================================================================
+ *   Interrupt Config Function
+ * ========================================================================== */
+
+/**
+ * @brief  Handles interrupt for T32A1 Timer C
+ * @param
+ * @note   Check Exceptions RM for Interrupt Initilization. 
+ *         Follow 4.6.2. Preparation for general setup steps in T32A RM
+ */
+void T32A1_Interrupt_Enable(void)
+{
+    // Fire interrupt on T32AxRGC1. Disable T32AxRGC0
+    TSB_T32A1->IMC &= ~T32A_IMx_IMx1;       /* 0 = unmask (Enabled), 1 = mask (Disabled)*/
+    TSB_T32A1->IMC |= T32A_IMx_IMx0;        
+
+    /* [1] Disabling Interrupt by CPU */
+    __disable_irq();                                                /* Disable Interrupt via PRIMASK */
+    /* [2] CPU Registers Setting */
+    __NVIC_SetPriority(INTT32A01AC_IRQn, T32A1_IRQ_PRIORITY);       /* Set Priority - Interrupt Priority Register (8Bit wide) */
+    __NVIC_ClearPendingIRQ(INTT32A01AC_IRQn);                       /* Clear Pending IRQ - Interrupt Clear Pending Register */
+
+    /* [3-5] Ignored */
+
+    /* [7] Enabling Interrupt by CPU */
+    __NVIC_EnableIRQ(INTT32A01AC_IRQn);                             /* Enables a device specific interrupt in the NVIC interrupt controller */
+    __enable_irq();
 }
