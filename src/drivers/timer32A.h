@@ -18,6 +18,9 @@
 
 #include "TMPM4KyA.h"
 #include <stdint.h>
+#include <stdbool.h>
+
+extern volatile bool T32A01AC_IRQ_Fire;  
 
 /* ==========================================================================
  *   User Config
@@ -91,9 +94,12 @@
 /* ==========================================================================
  *   Interrupts
  * ========================================================================== */
-#define T32A_IMx_IMx1           ((uint32_t)0x01 << 1U)     /*!< Control to mask the match detection interrupt request ([T32AxRGx1]) */
 #define T32A_IMx_IMx0           ((uint32_t)0x01 << 0U)     /*!< Control to mask the match detection interrupt request ([T32AxRGx0]) */
+#define T32A_IMx_IMx1           ((uint32_t)0x01 << 1U)     /*!< Control to mask the match detection interrupt request ([T32AxRGx1]) */
 #define T32A1_IRQ_PRIORITY      5
+
+#define T32A1_STx_INTC0          ((uint32_t)0x01 << 0U)     /*!< Indicates a match flag ([T32AxRGx0]) */
+#define T32A1_STx_INTC1          ((uint32_t)0x01 << 1U)     /*!< Indicates a match flag ([T32AxRGx1]) */
 
 /* ==========================================================================
  *   Function Prototypes

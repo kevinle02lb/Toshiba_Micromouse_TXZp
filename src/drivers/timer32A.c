@@ -28,6 +28,8 @@
 
 #include "timer32A.h"
 
+volatile bool T32A01AC_IRQ_Fire = 0;
+
 /* ==========================================================================
  *   Initialization
  * ========================================================================== */
@@ -275,4 +277,14 @@ void T32A1_Interrupt_Enable(void)
     /* [7] Enabling Interrupt by CPU */
     __NVIC_EnableIRQ(INTT32A01AC_IRQn);                             /* Enables a device specific interrupt in the NVIC interrupt controller */
     __enable_irq();
+}
+
+
+
+void INTT32A01AC_IRQHandler(void)
+{
+    /* Acknowledge Flag */
+    TSB_T32A1->STC = T32A1_STx_INTC1;       /* Write 1 to clear to 0 */
+
+    T32A01AC_IRQ_Fire = 1;                  /* Set Global variable to indicate IRQ fired */
 }
