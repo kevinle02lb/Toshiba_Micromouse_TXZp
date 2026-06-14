@@ -1,5 +1,5 @@
 /**
- * @file        ctrlTick.c
+ * @file        ctrlTick.h
  * @brief       ctrlTick in main.c to indicate when logic should update.
  * @version     V1.0.0
  * @date        29-05-2026

@@ -44,7 +44,7 @@ void ENC32A_Init(void)
 
 void ENC0_Init(void)
 {
-    PORT_D_Init();
+    PORT_N_Init();
     
     /* [1] Enable peripheral clock */
     TSB_CG->FSYSMENB |= ENC0_CG_FSYSMENB_IPMENB06;

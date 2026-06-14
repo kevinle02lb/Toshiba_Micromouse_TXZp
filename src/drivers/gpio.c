@@ -209,7 +209,7 @@ void GPIO_G_ToggleData(uint8_t data)
 {
     TSB_PG->DATA ^= data;
 }
-void GPIO_G_ToggleData(uint8_t data)
+void GPIO_U_ToggleData(uint8_t data)
 {
-    TSB_PG->DATA ^= data;
+    TSB_PU->DATA ^= data;
 }

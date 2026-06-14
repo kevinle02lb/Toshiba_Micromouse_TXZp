@@ -55,6 +55,7 @@ static IR_SensorData ir_data;
  */
 void IR_Init(void)
 {
+    DMAC_Init();         /* Initialize DMAC */
     ADC_Init();
     PORT_U_Init();       /* [1] Left emitters  */
     PORT_G_Init();       /* [2] Right emitters */

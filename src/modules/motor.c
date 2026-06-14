@@ -24,7 +24,7 @@
  *   REVERSE : IN1=PWM,  IN2=LOW  (datasheet calls this forward)
  *   BRAKE   : IN1=HIGH, IN2=HIGH (motor shorted, fast stop)
  *   STOP    : IN1=LOW,  IN2=LOW  (standby, freewheel)
- * 
+ *
  *  @note
  *   File structure and Doxygen formatting assisted by AI.
  *
@@ -38,8 +38,8 @@
 #define PERIOD_L    ((uint16_t)T32A_CH0_PERIOD)
 #define PERIOD_R    ((uint16_t)T32A_CH3_PERIOD)
 
-static direction_t s_left_dir  = STOP;
-static direction_t s_right_dir = STOP;
+static direction_t motor_left_dir  = STOP;
+static direction_t motor_right_dir = STOP;
 
 /* ==========================================================================
  *   Private helper
@@ -54,7 +54,9 @@ static direction_t s_right_dir = STOP;
 static inline uint16_t Speed_ToDuty(uint8_t speed, uint16_t period)
 {
     if (speed >= MAX_SPEED)
+    {
         return (uint16_t)(period - 1U);
+    }
 
     return (uint16_t)(period - 1U - ((uint32_t)speed * (uint32_t)(period - 1U) / (uint32_t)MAX_SPEED));     /* Inverted: Period - duty ticks */
 }
@@ -74,8 +76,8 @@ void Motor_Init(void)
     T32A3_SetOutCRA1(T32A_OUTPUT_LOW);
     T32A3_SetOutCRB1(T32A_OUTPUT_LOW);
 
-    s_left_dir  = STOP;
-    s_right_dir = STOP;
+    motor_left_dir  = STOP;
+    motor_right_dir = STOP;
 }
 
 /* ==========================================================================
@@ -93,8 +95,8 @@ void Motor_Stop(void)
     T32A0_Stop();
     T32A3_Stop();
 
-    s_left_dir  = STOP;
-    s_right_dir = STOP;
+    motor_left_dir  = STOP;
+    motor_right_dir = STOP;
 }
 
 /* ==========================================================================
@@ -106,17 +108,16 @@ void Motor_SetLeft(direction_t dir, uint8_t speed)
     uint16_t duty = Speed_ToDuty(speed, PERIOD_L);
 
     /* Fast path: same direction, just update duty */
-    if (dir == s_left_dir)
-    {   
-        
+    if (dir == motor_left_dir)
+    {
         if (dir == FORWARD)      /* IN2 duty */
-        { 
-            T32A0_SetTimerB0(duty); 
-        }   
+        {
+            T32A0_SetTimerB0(duty);
+        }
         else if (dir == REVERSE) /* IN1 duty */
-        { 
-            T32A0_SetTimerA0(duty); 
-        }   
+        {
+            T32A0_SetTimerA0(duty);
+        }
         /* BRAKE / STOP: nothing to update */
         return;
     }
@@ -159,7 +160,7 @@ void Motor_SetLeft(direction_t dir, uint8_t speed)
             break;
     }
 
-    s_left_dir = dir;
+    motor_left_dir = dir;
     T32A0_Start();
 }
 
@@ -172,15 +173,15 @@ void Motor_SetRight(direction_t dir, uint8_t speed)
     uint16_t duty = Speed_ToDuty(speed, PERIOD_R);
 
     /* Fast path */
-    if (dir == s_right_dir)
+    if (dir == motor_right_dir)
     {
-        if (dir == FORWARD)      
-        { 
-            T32A3_SetTimerB0(duty); 
+        if (dir == FORWARD)
+        {
+            T32A3_SetTimerB0(duty);
         }
-        else if (dir == REVERSE) 
-        { 
-            T32A3_SetTimerA0(duty); 
+        else if (dir == REVERSE)
+        {
+            T32A3_SetTimerA0(duty);
         }
         return;
     }
@@ -218,7 +219,7 @@ void Motor_SetRight(direction_t dir, uint8_t speed)
             break;
     }
 
-    s_right_dir = dir;
+    motor_right_dir = dir;
     T32A3_Start();
 }
 

@@ -33,7 +33,7 @@ typedef struct
     __IO uint32_t DstEndPtr;     /*!< Destination end address */
     __IO uint32_t ChnlCfg;       /*!< Transfer mode / cycle control */
          uint32_t RESERVED;      /*!< Padding — must not be written */
-} DMA_ChnlCtrlData_TypeDef;
+} DMA_ChnlCtrlData_t;
 
 /* ==========================================================================
  *   DMAChnlCfg Bit-Field Macros (PL230 / DMAC-B)

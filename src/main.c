@@ -62,6 +62,9 @@
 /* Inclutions */
 #include "TMPM4KyA.h"
 #include "system_TMPM4KyA.h"
+#include "modules/ctrlTick.h"
+#include "modules/irSensor.h"
+#include "modules/motor.h"
 
 
 
@@ -69,6 +72,9 @@ int main()
 {
 	SystemInit();								/* Initialize system clock and peripherals */
 	CtrlTick_Init();
+	IR_Init();
+	Motor_Init();
+	
 
 	while(1)
 	{

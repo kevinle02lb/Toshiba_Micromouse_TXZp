@@ -59,6 +59,31 @@ typedef enum
     IR_COUNT     = 4    /* Number of IR Sensor Pairs */
 } IR_Channel;
 
+/**
+ * @brief  IR sensor Prerecorded values (Edit This)
+ */
+
+#define IR_DIST_TABLE_SIZE  8
+
+typedef struct
+{
+    uint16_t adc_value;   /* Calibrated ADC reading */
+    uint16_t distance_mm; /* Corresponding distance */
+} ir_dist_point_t;
+
+/* Per-sensor calibration table (example for one sensor) */
+static const ir_dist_point_t ir_left_dist_table[IR_DIST_TABLE_SIZE] = 
+{
+    {3800,  20},   /* Very close */
+    {2800,  30},
+    {1800,  40},
+    {1000,  50},   /* Center of cell — your "reference" point */
+    { 600,  60},
+    { 350,  70},
+    { 200,  80},
+    { 100, 100}    /* Far — unreliable beyond here */
+};
+
 /* ==========================================================================
  *   Sensor Data Structure
  * ========================================================================== */
@@ -72,6 +97,7 @@ typedef struct
     uint16_t ambient[IR_COUNT];     /*!< Background light (emitter OFF) */
     uint16_t reflected[IR_COUNT];   /*!< True wall reflection (raw - ambient) */
     uint16_t filtered[IR_COUNT];    /*!< IIR-filtered reflected value */
+    uint16_t distance_mm[IR_COUNT]; /*!< Distance for Each IR Sensor*/
     bool     wallDetected[IR_COUNT];
 } IR_SensorData;
 
@@ -127,5 +153,8 @@ void FarLeftEmitterToggle(void);
 void LeftEmitterToggle(void);
 void RightEmitterToggle(void);
 void FarRightEmitterToggle(void);
+
+/* IIR Filter */
+uint16_t IR_FilterIIR(uint16_t prev, uint16_t curr, uint8_t shift);
 
 #endif /* IRSENSOR_H */

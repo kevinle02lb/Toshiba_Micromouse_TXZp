@@ -29,7 +29,7 @@
  * @note   64 entries × 16 bytes = 1024 bytes. Alignment = 1024 because
  *         CTRLBASEPTR masks off bits [9:0].
  */
-__attribute__((aligned(1024))) static DMA_ChnlCtrlData_TypeDef DMA_CtrlTable[DMA_CHANNEL_COUNT * 2U];
+__attribute__((aligned(1024))) static DMA_ChnlCtrlData_t DMA_CtrlTable[DMA_CHANNEL_COUNT * 2U];
 
 /* ==========================================================================
  *   ADC Result Buffers
