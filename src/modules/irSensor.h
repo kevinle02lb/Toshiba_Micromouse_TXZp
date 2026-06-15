@@ -59,30 +59,6 @@ typedef enum
     IR_COUNT     = 4    /* Number of IR Sensor Pairs */
 } IR_Channel;
 
-/**
- * @brief  IR sensor Prerecorded values (Edit This)
- */
-
-#define IR_DIST_TABLE_SIZE  8
-
-typedef struct
-{
-    uint16_t adc_value;   /* Calibrated ADC reading */
-    uint16_t distance_mm; /* Corresponding distance */
-} ir_dist_point_t;
-
-/* Per-sensor calibration table (example for one sensor) */
-static const ir_dist_point_t ir_left_dist_table[IR_DIST_TABLE_SIZE] = 
-{
-    {3800,  20},   /* Very close */
-    {2800,  30},
-    {1800,  40},
-    {1000,  50},   /* Center of cell — your "reference" point */
-    { 600,  60},
-    { 350,  70},
-    { 200,  80},
-    { 100, 100}    /* Far — unreliable beyond here */
-};
 
 /* ==========================================================================
  *   Sensor Data Structure
@@ -113,6 +89,37 @@ typedef struct
 #define IR_FILTER_SHIFT     3U
 
 /* ==========================================================================
+ *   Distance Calibration
+ * ========================================================================== */
+
+/**
+ * @brief  Number of measured calibration points.
+ * @note   Start with 5-6 points. Add more if curve is non-linear.
+ */
+#define IR_CAL_POINTS       6U
+
+/**
+ * @brief  Distance sentinels (mm).
+ */
+#define IR_DIST_NO_WALL     255U    /*!< No wall detected / out of range */
+#define IR_DIST_TOO_CLOSE   30U     /*!< Below reliable minimum */
+
+/* ==========================================================================
+ *   Wall Detection Thresholds (mm)
+ * ========================================================================== */
+
+/**
+ * @brief  Wall presence threshold.
+ * @note   Typical maze half-cell is ~90 mm.
+ */
+#define IR_WALL_THRESHOLD_MM    80U
+
+/**
+ * @brief  Hysteresis band to prevent flicker.
+ */
+#define IR_WALL_HYSTERESIS_MM   15U
+
+/* ==========================================================================
  *   Function Prototypes
  * ========================================================================== */
 
@@ -133,6 +140,20 @@ const IR_SensorData* IR_GetData(void);
 uint16_t IR_GetRaw(IR_Channel ch);
 uint16_t IR_GetReflected(IR_Channel ch);
 bool IR_IsWallDetected(IR_Channel ch, uint16_t threshold);
+
+/**
+ * @brief  Get latest distance for a channel (mm).
+ * @param  ch  Sensor channel.
+ * @return uint16_t  Distance in mm, or IR_DIST_NO_WALL if none.
+ */
+uint16_t IR_GetDistanceMm(IR_Channel ch);
+
+/**
+ * @brief  Check if wall is present with hysteresis.
+ * @param  ch  Sensor channel.
+ * @return bool  true if wall reliably detected.
+ */
+bool IR_IsWallPresent(IR_Channel ch);
 
 /* Emitter control */
 void IR_AllEmittersOff(void);

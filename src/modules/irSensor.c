@@ -46,6 +46,48 @@
 static IR_SensorData ir_data;
 
 /* ==========================================================================
+ *   Calibration Data (measured and hardcoded)
+ * ========================================================================== */
+
+/**
+ * @brief  Single calibration point: ADC value → distance.
+ */
+typedef struct
+{
+    uint16_t adc;       /*!< Filtered ADC reading */
+    uint16_t dist_mm;   /*!< Measured distance at that ADC */
+} IR_CalPoint_t;
+
+/**
+ * @brief  Calibration table for all sensors.
+ * @note   Points MUST be sorted by adc ascending (far → close).
+ *         Measure with white maze wall, emitter at nominal current.
+ *
+ *   Measurement procedure:
+ *   1. Place wall at 150 mm, record filtered ADC → write as point 0
+ *   2. Place wall at 120 mm, record filtered ADC → write as point 1
+ *   3. Repeat for 100, 80, 60, 40 mm
+ *
+ *   Default values are placeholders — replace with MEASUREMENTS
+ */
+static const IR_CalPoint_t ir_cal[IR_CAL_POINTS] = 
+{
+    /* adc    dist_mm    */
+    {  400,   150 },    /* Far: weak reflection */
+    {  800,   120 },
+    { 1400,   100 },
+    { 2200,    80 },    /* Wall threshold region */
+    { 3200,    60 },
+    { 4000,    40 }     /* Near: strong reflection */
+};
+
+/* ==========================================================================
+ *   Wall Detection State
+ * ========================================================================== */
+
+static bool wall_state[IR_COUNT] = {false, false, false, false};
+
+/* ==========================================================================
  *   Initialization
  * ========================================================================== */
 
@@ -135,6 +177,9 @@ void IR_SampleAll(void)
 
     /* [5] Power save — turn off emitters between samples */
     IR_AllEmittersOff();
+
+    /* [6] Update distances and wall flags from filtered data */
+    IR_UpdateDistances();
 }
 
 /* ==========================================================================
@@ -179,6 +224,129 @@ uint16_t IR_GetReflected(IR_Channel ch)
 bool IR_IsWallDetected(IR_Channel ch, uint16_t threshold)
 {
     return (ir_data.reflected[ch] >= threshold);
+}
+
+/**
+ * @brief  Get latest distance for a channel (mm).
+ * @param  ch  Sensor channel.
+ * @return uint16_t  Distance in mm, or IR_DIST_NO_WALL if none.
+ */
+uint16_t IR_GetDistanceMm(IR_Channel ch)
+{
+    if (ch >= IR_COUNT) {
+        return IR_DIST_NO_WALL;
+    }
+    return ir_data.distance_mm[ch];
+}
+
+/**
+ * @brief  Check if wall is present with hysteresis.
+ * @param  ch  Sensor channel.
+ * @return bool  true if wall reliably detected.
+ */
+bool IR_IsWallPresent(IR_Channel ch)
+{
+    if (ch >= IR_COUNT) {
+        return false;
+    }
+    return wall_state[ch];
+}
+
+/* ==========================================================================
+ *   Distance & Wall Detection (Private)
+ * ========================================================================== */
+
+/**
+ * @brief  Linear interpolation between two calibration points.
+ * @param  adc   Filtered ADC value.
+ * @param  p0    Lower point (adc <= target).
+ * @param  p1    Upper point (adc >= target).
+ * @return uint16_t  Interpolated distance in mm.
+ */
+uint16_t IR_Interpolate(uint16_t adc, const IR_CalPoint_t *p0, const IR_CalPoint_t *p1)
+{
+    uint32_t range_adc;
+    uint32_t offset;
+    uint32_t dist_range;
+    uint32_t result;
+
+    /* Avoid divide by zero */
+    if (p0->adc == p1->adc) 
+    {
+        return p0->dist_mm;
+    }
+
+    range_adc  = (uint32_t)(p1->adc - p0->adc);
+    offset     = (uint32_t)(adc - p0->adc);
+    dist_range = (uint32_t)(p0->dist_mm - p1->dist_mm);  /* dist decreases as adc increases */
+
+    /* result = p0.dist - (offset / range_adc) * dist_range */
+    result = (uint32_t)p0->dist_mm - ((offset * dist_range) / range_adc);
+
+    return (uint16_t)result;
+}
+
+/**
+ * @brief  Convert filtered ADC to distance using calibration table.
+ * @param  adc_val  Filtered 12-bit value.
+ * @return uint16_t  Distance in mm, or sentinel if out of range.
+ */
+uint16_t IR_AdcToMm(uint16_t adc_val)
+{
+    uint8_t i;
+
+    /* Below first point: farther than measured → no wall */
+    if (adc_val <= ir_cal[0].adc) 
+    {
+        return IR_DIST_NO_WALL;
+    }
+
+    /* Above last point: too close / saturated */
+    if (adc_val >= ir_cal[IR_CAL_POINTS - 1U].adc) 
+    {
+        return IR_DIST_TOO_CLOSE;
+    }
+
+    /* Find bracket and interpolate */
+    for (i = 1U; i < IR_CAL_POINTS; i++)
+    {
+        if (adc_val < ir_cal[i].adc) 
+        {
+            return IR_Interpolate(adc_val, &ir_cal[i - 1U], &ir_cal[i]);
+        }
+    }
+
+    return IR_DIST_NO_WALL;  /* Should not reach */
+}
+
+/**
+ * @brief  Update distance_mm[] and wallDetected[] from filtered data.
+ * @note   Call at the end of IR_SampleAll().
+ */
+void IR_UpdateDistances(void)
+{
+    int i;
+    uint16_t dist;
+
+    for (i = 0; i < IR_COUNT; i++)
+    {
+        /* Lookup distance from filtered value */
+        dist = IR_AdcToMm(ir_data.filtered[i]);
+        ir_data.distance_mm[i] = dist;
+
+        /* Wall detection with hysteresis */
+        if (wall_state[i]) 
+        {
+            /* Was seeing wall — need to get farther to clear */
+            wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM + IR_WALL_HYSTERESIS_MM));
+        } else 
+        {
+            /* Was clear — need to get closer to detect */
+            wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM - IR_WALL_HYSTERESIS_MM));
+        }
+
+        ir_data.wallDetected[i] = wall_state[i];
+    }
 }
 
 /* ==========================================================================
@@ -229,8 +397,6 @@ void FarLeftEmitterToggle(void) { GPIO_U_ToggleData((uint8_t)Px1_MASK); }
 void LeftEmitterToggle(void)    { GPIO_U_ToggleData((uint8_t)Px0_MASK); }
 void RightEmitterToggle(void)   { GPIO_G_ToggleData((uint8_t)Px5_MASK); }
 void FarRightEmitterToggle(void){ GPIO_G_ToggleData((uint8_t)Px4_MASK); }
-
-
 
 /* ==========================================================================
  *   IR Filtering from Spikes
