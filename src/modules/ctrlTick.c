@@ -32,9 +32,10 @@ void CtrlTick_Init(void)
  */
 bool CtrlTick_GetAndClear(void)
 {
+    __disable_irq();
     bool wasSet = T32A01AC_IRQ_Fire;
     if (wasSet) 
         T32A01AC_IRQ_Fire = false;
-
+    __enable_irq();
     return wasSet;
 }

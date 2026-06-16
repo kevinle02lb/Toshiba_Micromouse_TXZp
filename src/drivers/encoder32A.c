@@ -54,7 +54,10 @@ void ENC0_Init(void)
 
     /* [3] Operation mode: Encoder (000), no Z, no Phase 3 */
     TSB_EN0->TNCR &= ~(TNCR_MODE_MASK | TNCR_P3EN_MASK | TNCR_ZEN_MASK);
-    TSB_EN0->TNCR |= TNCR_ENCLR_MASK;   /* Clear counter */
+    /* Clear counter */
+    TSB_EN0->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN0->TNCR &= ~TNCR_ENCLR_MASK;
+    
 
     /* [4] Input circuit: 10 MHz sample clock, 400 ns noise cancellation */
     TSB_EN0->CLKCR = CLKCR_SPLCKS_8DIV;                          /* Fsys/8 = 10 MHz */
@@ -86,7 +89,10 @@ void ENC2_Init(void)
 
     /* [3] Operation mode: Encoder, no Z, no Phase 3 */
     TSB_EN2->TNCR &= ~(TNCR_MODE_MASK | TNCR_P3EN_MASK | TNCR_ZEN_MASK);
+    /* Clear counter */
     TSB_EN2->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN2->TNCR &= ~TNCR_ENCLR_MASK;
+    
 
     /* [4] Input circuit: 10 MHz sample, 400 ns noise cancellation */
     TSB_EN2->CLKCR = CLKCR_SPLCKS_8DIV;
@@ -119,6 +125,7 @@ void ENC0_ClearCNT(void)
 {
     ENC0_Stop();
     TSB_EN0->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN0->TNCR &= ~TNCR_ENCLR_MASK;
     ENC0_Start();
 }
 
@@ -126,6 +133,7 @@ void ENC2_ClearCNT(void)
 {
     ENC2_Stop();
     TSB_EN2->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN2->TNCR &= ~TNCR_ENCLR_MASK;
     ENC2_Start();
 }
 
