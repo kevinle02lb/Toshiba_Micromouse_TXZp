@@ -118,7 +118,6 @@ void IR_Init(void)
  *   Timing:
  *   - IR decay after OFF:  50 µs
  *   - IR propagation ON: 100 µs
- *   - ADC conversion:       ~2 µs per channel @ 40 MHz SCLK
  *   - Total: ~200 µs
  */
 void IR_SampleAll(void)
@@ -129,7 +128,7 @@ void IR_SampleAll(void)
 
     /* [1] Ambient reading — all emitters OFF */
     IR_AllEmittersOff();
-    SysTick_us(150U);             /* Wait for previous IR to decay */
+    SysTick_us(50U);             /* Wait for previous IR to decay */
 
     Start_ADC();                 /* Trigger both ADC units, DMA re-armed */
     SysTick_us(20U);             /* Wait for 2 conversions + DMA burst */
