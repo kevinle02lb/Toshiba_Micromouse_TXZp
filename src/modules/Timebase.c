@@ -1,5 +1,5 @@
 /**
- * @file        ctrlTick.c
+ * @file        Timebase.c
  * @brief       control Loop in main.c to indicate when logic should update.
  * @version     V1.0.0
  * @date        29-05-2026
@@ -13,14 +13,14 @@
  * Copyright (c) [Kevin Le] 2026
  */
 
-#include "ctrlTick.h"
+#include "Timebase.h"
 #include "drivers/timer32A.h"
 
 /**
  * @brief  Starts T32A1 Timer 
  * @note   
  */
-void CtrlTick_Init(void)
+void Timebase_Init(void)
 {
     T32A1_Init();       /* Interval Timer Interrupt */
     T32A1_Start();      /* Timer already configured by T32A_Init() */
@@ -30,7 +30,7 @@ void CtrlTick_Init(void)
  * @brief  
  * @note   
  */
-bool CtrlTick_GetAndClear(void)
+bool Timebase_GetAndClear(void)
 {
     __disable_irq();
     bool wasSet = T32A01AC_IRQ_Fire;

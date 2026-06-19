@@ -1,5 +1,5 @@
 /**
- * @file        ctrlTick.h
+ * @file        Timebase.h
  * @brief       ctrlTick in main.c to indicate when logic should update.
  * @version     V1.0.0
  * @date        29-05-2026
@@ -14,12 +14,12 @@
  */
 
 
-#ifndef CtrlTick_H
-#define CtrlTick_H
+#ifndef TIMEBASE_H
+#define TIMEBASE_H
 
 #include <stdbool.h>
 
-void CtrlTick_Init(void);
-bool CtrlTick_GetAndClear(void);
+void Timebase_Init(void);
+bool Timebase_GetAndClear(void);
 
-#endif /* CtrlTick_H */
+#endif /* TIMEBASE_H */

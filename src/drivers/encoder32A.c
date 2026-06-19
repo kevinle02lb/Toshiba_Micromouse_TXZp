@@ -36,6 +36,10 @@
  *   Initialization
  * ========================================================================== */
 
+/**
+ * @brief  Initialise encoder modules
+ * @note   Separately inits each module
+ */
 void ENC32A_Init(void)
 {
     ENC0_Init();   /* Left motor encoder */
@@ -146,15 +150,8 @@ void ENC2_ClearCNT(void)
  * @return true = CW, false = CCW.
  * @note   Returns 0 when ENRUN = 0.
  */
-bool ENC0_GetStatus(void)
-{
-    return (TSB_EN0->STS & STS_UD_MASK) != 0;
-}
-
-bool ENC2_GetStatus(void)
-{
-    return (TSB_EN2->STS & STS_UD_MASK) != 0;
-}
+bool ENC0_GetStatus(void)     { return (TSB_EN0->STS & STS_UD_MASK) != 0; }
+bool ENC2_GetStatus(void)     { return (TSB_EN2->STS & STS_UD_MASK) != 0; }
 
 int32_t ENC0_ReadCount(void)  { return (int32_t)TSB_EN0->CNT; }
 int32_t ENC2_ReadCount(void)  { return (int32_t)TSB_EN2->CNT; }

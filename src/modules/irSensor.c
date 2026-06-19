@@ -1,5 +1,5 @@
 /**
- * @file        irSensor.c
+ * @file        IrSensor.c
  * @brief       IR Sensor driver implementation for TMPM4Ky micromouse.
  * @version     V1.0.0
  * @date        11-06-2026
@@ -33,7 +33,7 @@
  * Copyright (c) [Kevin Le] 2026
  */
 
-#include "irSensor.h"
+#include "IrSensor.h"
 #include "drivers/adc.h"
 #include "drivers/dma.h"
 #include "drivers/gpio.h"
@@ -252,7 +252,7 @@ bool IR_IsWallPresent(IR_Channel ch)
 }
 
 /* ==========================================================================
- *   Distance & Wall Detection (Private)
+ *   Distance & Wall Detection
  * ========================================================================== */
 
 /**

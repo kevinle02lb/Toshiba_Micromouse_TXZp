@@ -1,5 +1,5 @@
 /**
- * @file        encoderCtrl.h
+ * @file        Encoder.h
  * @brief       Encoder control module – speed and position from quadrature encoders
  * @version     V1.0.0
  * @date        17-06-2026
@@ -14,19 +14,28 @@
  *     gives counts per second.
  *
  * @note
- *   This module must be updated every 1 kHz tick (call @ref encoderCtrl_Update).
+ *   This module must be updated every 1 kHz tick (call @ref Encoder_Update).
  * 
  *   File structure and Doxygen formatting assisted by AI.
  *
  * Copyright (c) [Kevin Le] 2026
  */
 
-#ifndef ENCODERCTRL_H
-#define ENCODERCTRL_H
+#ifndef ENCODER_H
+#define ENCODER_H
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "motor.h"      /* for motor_t */
+#include "Motor.h"      /* for motor_t */
+
+typedef struct
+{
+    int32_t raw_count;          /*!< Latest hardware counter value */
+    int32_t prev_count;         /*!< Value from previous tick */
+    int32_t delta;              /*!< raw - prev (counts per tick) */
+    int32_t position;           /*!< Accumulated signed position */
+    int32_t speed_filtered;     /*!< IIR-filtered speed (counts per second) */
+} EncoderState_t;
 
 /* ==========================================================================
  *   Configuration
@@ -42,12 +51,12 @@
  *   Function Prototypes
  * ========================================================================== */
 
-void encoderCtrl_Init(void);
-void encoderCtrl_Update(void);
-int32_t encoderCtrl_GetSpeed_cps(motor_t motor);
-int32_t encoderCtrl_GetDelta(motor_t motor);
-int32_t encoderCtrl_GetPosition(motor_t motor);
-void encoderCtrl_ResetPosition(motor_t motor);
-int32_t encoderCtrl_GetRawCount(motor_t motor);
+void Encoder_Init(void);
+void Encoder_Update(void);
+int32_t Encoder_GetSpeed_cps(motor_t motor);
+int32_t Encoder_GetDelta(motor_t motor);
+int32_t Encoder_GetPosition(motor_t motor);
+void Encoder_ResetPosition(motor_t motor);
+int32_t Encoder_GetRawCount(motor_t motor);
 
-#endif /* ENCODERCTRL_H */
+#endif /* ENCODER_H */

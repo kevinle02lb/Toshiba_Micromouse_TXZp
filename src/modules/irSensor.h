@@ -1,5 +1,5 @@
 /**
- * @file        irSensor.h
+ * @file        IrSensor.h
  * @brief       IR Sensor driver for TMPM4Ky micromouse.
  * @version     V1.0.0
  * @date        11-06-2026

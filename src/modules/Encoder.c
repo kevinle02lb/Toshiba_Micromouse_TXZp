@@ -1,5 +1,5 @@
 /**
- * @file        encoderCtrl.c
+ * @file        Encoder.c
  * @brief       Encoder control module implementation.
  * @version     V1.0.0
  * @date        17-06-2026
@@ -14,22 +14,11 @@
  * Copyright (c) [Kevin Le] 2026
  */
 
-#include "encoderCtrl.h"
+#include "Encoder.h"
 #include "encoder32A.h"
-#include <stddef.h>
-
 /* ==========================================================================
  *   Private Data
  * ========================================================================== */
-
-typedef struct
-{
-    int32_t raw_count;          /*!< Latest hardware counter value */
-    int32_t prev_count;         /*!< Value from previous tick */
-    int32_t delta;              /*!< raw - prev (counts per tick) */
-    int32_t position;           /*!< Accumulated signed position */
-    int32_t speed_filtered;     /*!< IIR-filtered speed (counts per second) */
-} EncoderState_t;
 
 static EncoderState_t enc_state[2];
 
@@ -61,11 +50,11 @@ static int32_t speed_filter_IIR(int32_t prev, int32_t curr, uint8_t shift)
  * ========================================================================== */
 
 
- /**
+/**
  * @brief  Initialise encoder hardware and internal state.
  * @note   Must be called once before any other function.
  */
-void encoderCtrl_Init(void)
+void Encoder_Init(void)
 {
     /* Initialise the hardware drivers */
     ENC32A_Init();
@@ -93,7 +82,7 @@ void encoderCtrl_Init(void)
  * @brief  Read both encoders, update delta, position, and filtered speed.
  * @note   Call this exactly once per control tick (1 kHz).
  */
-void encoderCtrl_Update(void)
+void Encoder_Update(void)
 {
     int32_t raw, delta, speed_raw;
 
@@ -138,7 +127,7 @@ void encoderCtrl_Update(void)
  * @param  motor  MOTOR_LEFT or MOTOR_RIGHT
  * @return int32_t  Speed in counts per second (signed, positive = forward).
  */
-int32_t encoderCtrl_GetSpeed_cps(motor_t motor)
+int32_t Encoder_GetSpeed_cps(motor_t motor)
 {
     if (motor != MOTOR_LEFT && motor != MOTOR_RIGHT)
         return 0;
@@ -150,7 +139,7 @@ int32_t encoderCtrl_GetSpeed_cps(motor_t motor)
  * @param  motor  MOTOR_LEFT or MOTOR_RIGHT
  * @return int32_t  Signed delta counts in one tick period.
  */
-int32_t encoderCtrl_GetDelta(motor_t motor)
+int32_t Encoder_GetDelta(motor_t motor)
 {
     if (motor != MOTOR_LEFT && motor != MOTOR_RIGHT)
         return 0;
@@ -162,7 +151,7 @@ int32_t encoderCtrl_GetDelta(motor_t motor)
  * @param  motor  MOTOR_LEFT or MOTOR_RIGHT
  * @return int32_t  Signed position in counts (increments on forward motion).
  */
-int32_t encoderCtrl_GetPosition(motor_t motor)
+int32_t Encoder_GetPosition(motor_t motor)
 {
     if (motor != MOTOR_LEFT && motor != MOTOR_RIGHT)
         return 0;
@@ -173,7 +162,7 @@ int32_t encoderCtrl_GetPosition(motor_t motor)
  * @brief  Reset the position counter for a motor to zero.
  * @param  motor  MOTOR_LEFT or MOTOR_RIGHT
  */
-void encoderCtrl_ResetPosition(motor_t motor)
+void Encoder_ResetPosition(motor_t motor)
 {
     if (motor != MOTOR_LEFT && motor != MOTOR_RIGHT)
         return;
@@ -185,7 +174,7 @@ void encoderCtrl_ResetPosition(motor_t motor)
  * @param  motor  MOTOR_LEFT or MOTOR_RIGHT
  * @return int32_t  Current counter value from the encoder peripheral.
  */
-int32_t encoderCtrl_GetRawCount(motor_t motor)
+int32_t Encoder_GetRawCount(motor_t motor)
 {
     if (motor == MOTOR_LEFT)
         return ENC0_ReadCount();

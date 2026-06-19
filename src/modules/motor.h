@@ -1,5 +1,5 @@
 /**
- * @file        motor.h
+ * @file        Motor.h
  * @brief       Motor control API for TB67H450AFNG H-bridge drivers
  * @version     V1.0.0
  * @date        08-06-2026

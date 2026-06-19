@@ -1,5 +1,5 @@
 /**
- * @file        motor.c
+ * @file        Motor.c
  * @brief       Motor control implementation for TB67H450AFNG
  * @version     V1.0.0
  * @date        08-06-2026
@@ -31,7 +31,7 @@
  * Copyright (c) [Kevin Le] 2026
  */
 
-#include "motor.h"
+#include "Motor.h"
 #include "drivers/timer32A.h"
 
 #define MAX_SPEED   100U

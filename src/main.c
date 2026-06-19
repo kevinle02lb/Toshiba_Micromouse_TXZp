@@ -62,23 +62,25 @@
 /* Inclutions */
 #include "TMPM4KyA.h"
 #include "system_TMPM4KyA.h"
-#include "modules/ctrlTick.h"
-#include "modules/irSensor.h"
-#include "modules/motor.h"
+#include "modules/Timebase.h"
+#include "modules/IrSensor.h"
+#include "modules/Encoder.h"
+#include "modules/Motor.h"
+
+void ModuleInit(void);
+
 
 
 
 int main()
 {
 	SystemInit();								/* Initialize system clock and peripherals */
-	CtrlTick_Init();
-	IR_Init();
-	Motor_Init();
+	ModuleInit();
 	
 
 	while(1)
 	{
-		if ( CtrlTick_GetAndClear() ) 
+		if ( TickCtrl_GetAndClear() ) 
 		{
             /* control Logic to be implemented */
         }
@@ -87,6 +89,19 @@ int main()
 	return 0;
 }
 
+
+
+/**
+ * @brief  Initialize all relevant Modules
+ * @note   Must be called after SystemInit()
+ */
+void ModuleInit()
+{
+	Timebase_Init();
+	IR_Init();
+	Encoder_Init();
+	Motor_Init();
+}
 
 
 
