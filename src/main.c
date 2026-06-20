@@ -80,7 +80,7 @@ int main()
 
 	while(1)
 	{
-		if ( TickCtrl_GetAndClear() ) 
+		if ( Timebase_GetAndClear() ) 
 		{
             /* control Logic to be implemented */
         }

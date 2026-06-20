@@ -6,7 +6,7 @@
  *
  * @details
  * 
- *   Formula:  output (MV) = Kp * error + Ki * integral + Kd * derivivative
+ *   Formula:  output (MV) = (Kp * error) + (Ki * integral) + (Kd * derivivative)
  *   MV = manipulated variable
  * 
  *   error = e(t) = SP - PV
@@ -48,6 +48,7 @@ void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min,
     pid->out_max = out_max;
 
     pid->integral = 0.0f;
+    pid->derivative = 0.0f;
     pid->prev_error = 0.0f;
 }
 
@@ -64,6 +65,59 @@ void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min,
 void PID_Reset(PID_t *pid)
 {
     pid->integral = 0.0f;
+    pid->derivative = 0.0f;
     pid->prev_error = 0.0f;
 }
 
+
+
+/**
+ * @brief  
+ * @param  pid  
+ * @note  
+ */
+float PID_Update(PID_t *pid, float error)
+{
+    float proportional_term, integral_term, derivative_term, output;
+
+    /* [1] Proportional Term */
+    proportional_term = pid->Kp * error;
+
+    /* [2] Integral Term */
+    pid->integral += error * pid->dt;
+
+    /* Integral clamping (anti-windup) - only if Ki is non-zero */
+    if (pid->Ki != 0.0f) 
+    {
+        float max_integral = pid->out_max / pid->Ki;
+        float min_integral = pid->out_min / pid->Ki;
+        if (pid->integral > max_integral) 
+        {
+            pid->integral = max_integral;
+        } 
+        else if (pid->integral < min_integral) 
+        {
+            pid->integral = min_integral;
+        }
+    }
+    
+    integral_term = pid->Ki * pid->integral;
+
+    /* [3] Derivative Term */
+    pid->derivative = (error - pid->prev_error) / pid->dt;
+    derivative_term = pid->Kd * pid->derivative;
+    
+    /* [4] Store current error for next cycle */
+    pid->prev_error = error;
+
+    /* [5] Output */
+    output = proportional_term + integral_term + derivative_term;
+
+    /* Clamp output */
+    if (output > pid->out_max)
+        output = pid->out_max;
+    else if (output < pid->out_min)
+        output = pid->out_min;
+    
+    return output;
+}
