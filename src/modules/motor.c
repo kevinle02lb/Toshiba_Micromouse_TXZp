@@ -20,8 +20,8 @@
  *
  *   Output mapping (IN1=TimerA/OUTA, IN2=TimerB/OUTB):
  *   ─────────────────────────────────────────────────────────
- *   FORWARD : IN1=LOW,  IN2=PWM  (datasheet calls this reverse)
- *   REVERSE : IN1=PWM,  IN2=LOW  (datasheet calls this forward)
+ *   FORWARD : IN1=PWM,  IN2=LOW  (datasheet calls this forward)
+ *   REVERSE : IN1=LOW,  IN2=PWM  (datasheet calls this reverse)
  *   BRAKE   : IN1=HIGH, IN2=HIGH (motor shorted, fast stop)
  *   STOP    : IN1=LOW,  IN2=LOW  (standby, freewheel)
  *
@@ -110,13 +110,13 @@ void Motor_SetLeft(direction_t dir, uint8_t speed)
     /* Fast path: same direction, just update duty */
     if (dir == motor_left_dir)
     {
-        if (dir == FORWARD)      /* IN2 duty */
-        {
-            T32A0_SetTimerB0(duty);
-        }
-        else if (dir == REVERSE) /* IN1 duty */
+        if (dir == FORWARD)      /* IN1 duty */
         {
             T32A0_SetTimerA0(duty);
+        }
+        else if (dir == REVERSE) /* IN2 duty */
+        {
+            T32A0_SetTimerB0(duty);
         }
         /* BRAKE / STOP: nothing to update */
         return;
@@ -127,20 +127,20 @@ void Motor_SetLeft(direction_t dir, uint8_t speed)
 
     switch (dir)
     {
-        /* IN2=PWM, IN1=LOW → OUT2=H, OUT1=L → current OUT2→OUT1 → M1(+) positive */
+        /* IN1=PWM, IN2=LOW → OUT1=H, OUT2=L → M1(+) positive */
         case FORWARD:
-            T32A0_SetOutCRA1(T32A_OUTPUT_LOW);       /* IN1 = LOW  */
-            T32A0_SetOutCRB1(T32A_OUTPUT_PPG);       /* IN2 = PWM  */
-            T32A0_SetTimerA0(0U);
-            T32A0_SetTimerB0(duty);
-            break;
-
-        /* IN1=PWM, IN2=LOW → OUT1=H, OUT2=L → current OUT1→OUT2 → M1(+) negative */
-        case REVERSE:
             T32A0_SetOutCRA1(T32A_OUTPUT_PPG);       /* IN1 = PWM  */
             T32A0_SetOutCRB1(T32A_OUTPUT_LOW);       /* IN2 = LOW  */
             T32A0_SetTimerA0(duty);
             T32A0_SetTimerB0(0U);
+            break;
+
+        /* IN1=LOW, IN2=PWM → OUT1=L, OUT2=H →  M1(+) negative */
+        case REVERSE:
+            T32A0_SetOutCRA1(T32A_OUTPUT_LOW);       /* IN1 = LOW  */
+            T32A0_SetOutCRB1(T32A_OUTPUT_PPG);       /* IN2 = PWM  */
+            T32A0_SetTimerA0(0U);
+            T32A0_SetTimerB0(duty);
             break;
 
         /* IN1=HIGH, IN2=HIGH → both outputs L → motor shorted */
@@ -177,11 +177,11 @@ void Motor_SetRight(direction_t dir, uint8_t speed)
     {
         if (dir == FORWARD)
         {
-            T32A3_SetTimerB0(duty);
+            T32A3_SetTimerA0(duty);
         }
         else if (dir == REVERSE)
         {
-            T32A3_SetTimerA0(duty);
+            T32A3_SetTimerB0(duty);
         }
         return;
     }
@@ -191,17 +191,17 @@ void Motor_SetRight(direction_t dir, uint8_t speed)
     switch (dir)
     {
         case FORWARD:
-            T32A3_SetOutCRA1(T32A_OUTPUT_LOW);
-            T32A3_SetOutCRB1(T32A_OUTPUT_PPG);
-            T32A3_SetTimerA0(0U);
-            T32A3_SetTimerB0(duty);
+            T32A3_SetOutCRA1(T32A_OUTPUT_PPG);      
+            T32A3_SetOutCRB1(T32A_OUTPUT_LOW);      
+            T32A3_SetTimerA0(duty);
+            T32A3_SetTimerB0(0U);
             break;
 
         case REVERSE:
-            T32A3_SetOutCRA1(T32A_OUTPUT_PPG);
-            T32A3_SetOutCRB1(T32A_OUTPUT_LOW);
-            T32A3_SetTimerA0(duty);
-            T32A3_SetTimerB0(0U);
+            T32A3_SetOutCRA1(T32A_OUTPUT_LOW);    
+            T32A3_SetOutCRB1(T32A_OUTPUT_PPG);      
+            T32A3_SetTimerA0(0U);
+            T32A3_SetTimerB0(duty);
             break;
 
         case BRAKE:
@@ -236,3 +236,4 @@ void Motor_Set(motor_t motor, direction_t dir, uint8_t speed)
         default:                                        break;
     }
 }
+

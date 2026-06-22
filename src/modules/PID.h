@@ -30,14 +30,26 @@ typedef struct
     float out_max;      /*!< Maximum output clamp (e.g., 100.0f) */
 } PID_t;
 
+/* ==========================================================================
+ *   PID Default Gains
+ * ========================================================================== */
+
+#define PID_KP_DEFAULT       0.5f
+#define PID_KI_DEFAULT       0.1f
+#define PID_KD_DEFAULT       0.02f
+#define PID_DT               0.001f
+#define PID_OUT_MIN          -100.0f
+#define PID_OUT_MAX          100.0f
+
 
 /* ==========================================================================
  *   Function Prototypes
  * ========================================================================== */
-
+void PID_Create(PID_t *pid);
 void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min, float out_max);
 void PID_Reset(PID_t *pid);
 float PID_Update(PID_t *pid, float error);
+float CalculateError(float* SP, float* PV);
 
 
 #endif /* PID_H */

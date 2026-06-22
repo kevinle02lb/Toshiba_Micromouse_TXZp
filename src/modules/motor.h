@@ -9,8 +9,8 @@
  *   go through timer32A.h.
  *
  *   Wiring (from schematic):
- *     Left  motor: PA3 (TimerA / IN1), PA4= (TimerB / IN2), OUT2=M1(+)
- *     Right motor: PC2 (TimerA / IN1), PC3 (TimerB / IN2), OUT2=M1(+)
+ *     Left  motor: PA3 (TimerA / IN1), PA4= (TimerB / IN2)
+ *     Right motor: PC2 (TimerA / IN1), PC3 (TimerB / IN2)
  *
  *   Datasheet truth table (TB67H450AFNG):
  *     IN1=H, IN2=L  →  Forward  (OUT1=H, OUT2=L, current OUT1→OUT2)
@@ -18,9 +18,6 @@
  *     IN1=H, IN2=H  →  Brake    (both outputs L, motor shorted)
  *     IN1=L, IN2=L  →  Stop     (Hi-Z, enters standby after t_stby)
  *
- *   Because OUT2 is wired to M1(+) and the motor's "+" terminal,
- *   the code's FORWARD/REVERSE labels are swapped from the datasheet
- *   to make M1(+) the positive terminal during "forward" motion.
  *
  * Copyright (c) [Kevin Le] 2026
  */

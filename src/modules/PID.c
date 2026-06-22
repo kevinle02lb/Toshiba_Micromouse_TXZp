@@ -28,6 +28,22 @@
  * ========================================================================== */
 
 /**
+ * @brief  Create and initialize a PID controller with default gains
+ * @param  pid  Pointer to PID_t structure
+ */
+void PID_Create(PID_t *pid)
+{
+    PID_Init(pid,
+             PID_KP_DEFAULT,
+             PID_KI_DEFAULT,
+             PID_KD_DEFAULT,
+             PID_DT,
+             PID_OUT_MIN,
+             PID_OUT_MAX);
+}
+
+
+/**
  * @brief  Initialize a PID controller with gains and output limits
  * @param  pid      Pointer to PID_t structure
  * @param  Kp       Proportional gain
@@ -60,7 +76,7 @@ void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min,
 /**
  * @brief  Reset the PID controller state
  * @param  pid  Pointer to PID_t structure
- * @note  Resets integral and previous error to zero
+ * @note  Resets integral, deriviative, and previous error to zero
  */
 void PID_Reset(PID_t *pid)
 {
@@ -120,4 +136,16 @@ float PID_Update(PID_t *pid, float error)
         output = pid->out_min;
     
     return output;
+}
+
+
+/**
+ * @brief  Calculates error as Setpoint - Process Variable
+ * @param  SP  Pointer to target speed (CPS)
+ * @param  PV  Pointer to actual speed (CPS)
+ * @return     Error value (SP - PV)
+ */
+float CalculateError(float* SP, float* PV)
+{
+    return *SP - *PV;
 }

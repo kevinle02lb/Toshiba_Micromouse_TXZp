@@ -37,7 +37,7 @@
  * ========================================================================== */
 
 /**
- * @brief  Initialise encoder modules
+ * @brief  Initialise all encoder modules
  * @note   Separately inits each module
  */
 void ENC32A_Init(void)

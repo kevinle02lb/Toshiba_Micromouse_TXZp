@@ -7,6 +7,9 @@
  * @details
  *   Reads A-ENC32 hardware counters, computes delta since last tick,
  *   applies IIR filtering on speed, and maintains a signed position.
+ * 
+ *   Motor Datasheet:
+ *      https://www.pololu.com/file/0J1487/pololu-micro-metal-gearmotors-rev-6-2.pdf
  *
  * @note 
  *   File structure and Doxygen formatting assisted by AI.
@@ -16,6 +19,37 @@
 
 #include "Encoder.h"
 #include "encoder32A.h"
+
+/* ==========================================================================
+ *   PHYSICAL CALCULATIONS & UNIT CONVERSIONS
+ * ==========================================================================
+ *
+ *   From Pololu Micro Metal Gearmotor Datasheet (Rev 6-2, Page 2):
+ *
+ *   "The two-channel Hall effect encoder senses the rotation of a 6-pole
+ *    magnetic disc on a rear protrusion of the motor shaft, providing a
+ *    resolution of 12 counts per revolution (CPR) of the motor shaft when
+ *    counting both edges of both channels."
+ *
+ *   "To compute the gearbox output CPR, multiply 12 by the gearbox
+ *    reduction factor."
+ *
+ *   Gearbox ratio: 30:1 (nominal)
+ *   Exact gear ratio: 29.89:1 (from Page 3 gearbox table)
+ *   Wheel CPR = 12 × 29.89 = 358.68 ≈ 359 counts per wheel revolution.
+ *
+ *   For simplicity in code constants, use 360 counts per wheel revolution.
+ *
+ *   Control Loop Tick: 1 kHz (1 ms period)
+ *   - Encoder_Update() is called once per tick.
+ *   - delta = counts detected in the last 1 ms.
+ *   - speed_raw (CPS) = delta × 1000    (1 second = 1000 ms)
+ *
+ *   Example:
+ *   - delta = 3 counts in 1 ms → CPS = 3000
+ *   - 3000 CPS / 360 counts/rev = 8.33 wheel revolutions per second.
+ */
+
 /* ==========================================================================
  *   Private Data
  * ========================================================================== */
