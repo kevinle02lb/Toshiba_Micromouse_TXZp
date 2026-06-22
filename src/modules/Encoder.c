@@ -161,7 +161,7 @@ void Encoder_Update(void)
  * @param  motor  MOTOR_LEFT or MOTOR_RIGHT
  * @return int32_t  Speed in counts per second (signed, positive = forward).
  */
-int32_t Encoder_GetSpeed_cps(motor_t motor)
+int32_t Encoder_GetSpeed_CPS(motor_t motor)
 {
     if (motor != MOTOR_LEFT && motor != MOTOR_RIGHT)
         return 0;

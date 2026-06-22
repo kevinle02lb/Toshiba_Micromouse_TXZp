@@ -69,7 +69,7 @@ typedef struct
 
 void Encoder_Init(void);
 void Encoder_Update(void);
-int32_t Encoder_GetSpeed_cps(motor_t motor);
+int32_t Encoder_GetSpeed_CPS(motor_t motor);
 int32_t Encoder_GetDelta(motor_t motor);
 int32_t Encoder_GetPosition(motor_t motor);
 void Encoder_ResetPosition(motor_t motor);

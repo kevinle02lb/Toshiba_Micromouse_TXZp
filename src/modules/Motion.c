@@ -87,11 +87,11 @@ void Motion_Update(void)
     float error_left, error_right;
     float output_left, output_right;
 
-    actual_left = (float)Encoder_GetSpeed_cps(MOTOR_LEFT);
-    actual_right = (float)Encoder_GetSpeed_cps(MOTOR_RIGHT);
+    actual_left = (float)Encoder_GetSpeed_CPS(MOTOR_LEFT);
+    actual_right = (float)Encoder_GetSpeed_CPS(MOTOR_RIGHT);
 
-    error_left = CalculateError(&target_left, &actual_left);
-    error_right = CalculateError(&target_right, &actual_right);
+    error_left = CalculateError(target_left, actual_left);
+    error_right = CalculateError(target_right, actual_right);
 
     output_left = PID_Update(&pid_left, error_left);
     output_right = PID_Update(&pid_right, error_right);
@@ -106,10 +106,11 @@ void Motion_Update(void)
  *   Motion Helper functions
  * ========================================================================== */
 /**
- * @brief  Bridge between Motor and PID controller
- * @param motor
- * @param output
- * @note   
+ * @brief  Bridge between PID controller and motor driver
+ * @param  motor  MOTOR_LEFT (0) or MOTOR_RIGHT (1)
+ * @param  output PID output in range [-100.0, +100.0] (% duty cycle)
+ * @note  Converts float output to direction + duty cycle.
+ *        Outputs below MOTION_DEADZONE are ignored (motor brakes).
  */
 static void Motion_ApplyOutput(motor_t motor, float output)
 {
@@ -119,12 +120,12 @@ static void Motion_ApplyOutput(motor_t motor, float output)
     if (output > MOTION_DEADZONE) 
     {
         dir = FORWARD;
-        duty = (uint8_t)(output + 0.5f);
+        duty = (uint8_t)(output + MOTION_ROUND_OFFSET);
     } 
     else if (output < -MOTION_DEADZONE) 
     {
         dir = REVERSE;
-        duty = (uint8_t)(-output + 0.5f);
+        duty = (uint8_t)(-output + MOTION_ROUND_OFFSET);
     } 
     else 
     {

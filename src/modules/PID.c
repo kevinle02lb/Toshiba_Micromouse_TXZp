@@ -34,9 +34,9 @@
 void PID_Create(PID_t *pid)
 {
     PID_Init(pid,
-             PID_KP_DEFAULT,
-             PID_KI_DEFAULT,
-             PID_KD_DEFAULT,
+             PID_KP,
+             PID_KI,
+             PID_KD,
              PID_DT,
              PID_OUT_MIN,
              PID_OUT_MAX);
@@ -145,7 +145,7 @@ float PID_Update(PID_t *pid, float error)
  * @param  PV  Pointer to actual speed (CPS)
  * @return     Error value (SP - PV)
  */
-float CalculateError(float* SP, float* PV)
+float CalculateError(float SP, float PV)
 {
-    return *SP - *PV;
+    return SP - PV;
 }
