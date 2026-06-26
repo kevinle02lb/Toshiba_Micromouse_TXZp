@@ -133,7 +133,7 @@ void Encoder_Update(void)
     (
         enc_state[MOTOR_LEFT].speed_filtered,
         speed_raw,
-        ENC_SPEED_FILTER_SHIFT
+        SPEED_FILTER_SHIFT
     );
 
     enc_state[MOTOR_LEFT].prev_count = raw;
@@ -150,7 +150,7 @@ void Encoder_Update(void)
     (
         enc_state[MOTOR_RIGHT].speed_filtered,
         speed_raw,
-        ENC_SPEED_FILTER_SHIFT
+        SPEED_FILTER_SHIFT
     );
 
     enc_state[MOTOR_RIGHT].prev_count = raw;

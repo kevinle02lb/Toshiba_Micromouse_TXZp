@@ -6,6 +6,9 @@
  * @date        05-05-2026
  *
  * @details
+ *   Do change for deployment: Configure IR sensor values, Odometry wheel distance (wheelbase)
+ * 
+ * 
  *   Initializes system clock and all modules, then runs the main control loop.
  *   Control logic (PID, maze solving) is called from the 1 kHz tick.
  *

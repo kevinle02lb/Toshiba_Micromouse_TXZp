@@ -48,20 +48,7 @@ typedef struct
  * @brief  IIR filter shift for speed smoothing.
  *         alpha = 1 / 2^SHIFT.  SHIFT=4 → alpha=1/16, gentle filtering.
  */
-#define ENC_SPEED_FILTER_SHIFT  4U
-
-/**
- * @brief  Counts per wheel revolution.
- *
- *   Pololu micro metal gearmotor encoder (Rev 6-2, pg 2):
- *   "12 CPR of the motor shaft when counting both edges of both channels"
- *   → 4x quadrature is ALREADY included in the 12 CPR figure.
- *   → A-ENC32 hardware does the 4x counting automatically.
- *
- *   12 CPR × 29.89:1 exact gear ratio = 358.68 → use 360 nominal.
- *   Calibrate by spinning wheel one full turn, reading raw count.
- */
-#define ENC_COUNTS_PER_REV   360U    /*!< Motor shaft 12 CPR × 30:1 gear */
+#define SPEED_FILTER_SHIFT  4U
 
 /* ==========================================================================
  *   Function Prototypes
