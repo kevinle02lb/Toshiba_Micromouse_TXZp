@@ -100,8 +100,7 @@ float PID_Update(PID_t *pid, float error)
     proportional_term = pid->Kp * error;
 
     /* [2] Integral Term */
-    // pid->integral += error * pid->dt;
-    pid->integral += error;
+    pid->integral += error * pid->dt;
 
     /* Integral clamping (anti-windup) - only if Ki is non-zero */
     if (pid->Ki != 0.0f) 
@@ -121,8 +120,7 @@ float PID_Update(PID_t *pid, float error)
     integral_term = pid->Ki * pid->integral;
 
     /* [3] Derivative Term */
-    // pid->derivative = (error - pid->prev_error) / pid->dt;
-    pid->derivative = (error - pid->prev_error);
+    pid->derivative = (error - pid->prev_error) / pid->dt;
     derivative_term = pid->Kd * pid->derivative;
     
     /* [4] Store current error for next cycle */

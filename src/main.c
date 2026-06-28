@@ -78,9 +78,8 @@
 #include "system_TMPM4KyA.h"
 #include "modules/Timebase.h"
 #include "modules/IrSensor.h"
-#include "modules/Encoder.h"
-#include "modules/Motor.h"
 #include "modules/Motion.h"
+
 
 void ModuleInit(void);
 
@@ -114,8 +113,6 @@ void ModuleInit()
 {
 	Timebase_Init();
 	IR_Init();
-	Encoder_Init();
-	Motor_Init();
 	Motion_Init();
 }
 
