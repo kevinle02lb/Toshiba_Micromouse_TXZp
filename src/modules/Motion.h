@@ -1,12 +1,13 @@
 /**
  * @file        Motion.h
- * @brief       Handles speed controlling and integegration of multiple modules
+ * @brief       Speed control for the Micromouse
  * @version     V1.0.0
- * @date        18-06-2026
+ * @date        27-06-2026
  *
  * @details
- * 
- * 
+ *   PID-based wheel speed controller with convenience wrappers
+ *   for common moves. Caller decides when to stop.
+ *
  * @note
  *   File structure and Doxygen formatting assisted by AI.
  *
@@ -20,19 +21,17 @@
 #include <stdbool.h>
 #include "Motor.h"
 
-#define MOTION_DEADZONE         0.5f        /*!< Below this, motor stops */
-#define MOTION_ROUND_OFFSET     0.5f        /*!< For rounding float to nearest int */
-
-
-/* ==========================================================================
- *   Function Prototypes
- * ========================================================================== */
+#define MOTION_DEADZONE         0.5f
+#define MOTION_ROUND_OFFSET     0.5f
 
 void Motion_Init(void);
 void Motion_Update(void);
-void Motion_SetSpeed(float left_cps, float right_cps);
-void Motion_Stop(void);
-static void Motion_ApplyOutput(motor_t motor, float output);
 
+void Motion_SetSpeed(float left_cps, float right_cps);
+void Motion_MoveForward(float speed_cps);
+void Motion_MoveBackward(float speed_cps);
+void Motion_TurnLeft(float speed_cps);
+void Motion_TurnRight(float speed_cps);
+void Motion_Stop(void);
 
 #endif /* MOTION_H */
