@@ -21,6 +21,10 @@
 #include <stdbool.h>
 #include "Motor.h"
 
+/* User Changeable Speed */
+#define TURN_SPEED              2500        /*!< Turn Speed in CPS */
+#define MOVE_SPEED              3000        /*!< Move forward Speed in CPS */
+
 #define MOTION_DEADZONE         0.5f
 #define MOTION_ROUND_OFFSET     0.5f
 

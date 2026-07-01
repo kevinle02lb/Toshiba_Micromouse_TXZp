@@ -143,7 +143,7 @@ void IR_SampleAll(void)
 
     /* [2] Reflected reading — all emitters ON */
     IR_AllEmittersOn();
-    SysTick_us(100U);            /* Allow IR to reach wall and reflect back */
+    SysTick_us(75U);            /* Allow IR to reach wall and reflect back */
 
     Start_ADC();                 /* Re-arm DMA + trigger both units */
     SysTick_us(20U);             /* Wait for conversion + DMA */
@@ -232,7 +232,8 @@ bool IR_IsWallDetected(IR_Channel ch, uint16_t threshold)
  */
 uint16_t IR_GetDistanceMm(IR_Channel ch)
 {
-    if (ch >= IR_COUNT) {
+    if (ch >= IR_COUNT) 
+    {
         return IR_DIST_NO_WALL;
     }
     return ir_data.distance_mm[ch];
@@ -245,7 +246,8 @@ uint16_t IR_GetDistanceMm(IR_Channel ch)
  */
 bool IR_IsWallPresent(IR_Channel ch)
 {
-    if (ch >= IR_COUNT) {
+    if (ch >= IR_COUNT) 
+    {
         return false;
     }
     return wall_state[ch];
@@ -338,7 +340,8 @@ void IR_UpdateDistances(void)
         {
             /* Was seeing wall — need to get farther to clear */
             wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM + IR_WALL_HYSTERESIS_MM));
-        } else 
+        } 
+        else 
         {
             /* Was clear — need to get closer to detect */
             wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM - IR_WALL_HYSTERESIS_MM));
