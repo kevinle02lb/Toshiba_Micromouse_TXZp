@@ -72,11 +72,14 @@ static void Motion_ApplyOutput(motor_t motor, float output)
  * ========================================================================== */
 
 /**
- * @brief  Initialize PID controllers.
- * @note   Call once after Encoder, Motor, and PID modules are initialized.
+ * @brief  Initialize PID controllers & Motor related modules.
+ * @note   Encoder are Motor must be initialized first.
  */
 void Motion_Init(void)
 {
+    Encoder_Init();
+    Motor_Init();
+
     PID_Create(&pid_left);
     PID_Create(&pid_right);
 
@@ -131,37 +134,37 @@ void Motion_SetSpeed(float left_cps, float right_cps)
 }
 
 /**
- * @brief  Move both wheels forward at the same speed.
+ * @brief  Sets both wheels forward at the same speed.
  * @param  speed_cps  Target speed (CPS).
  */
-void Motion_MoveForward(float speed_cps)
+void Motion_SetMoveForwardSpeed(float speed_cps)
 {
     Motion_SetSpeed(speed_cps, speed_cps);
 }
 
 /**
- * @brief  Move both wheels backward at the same speed.
+ * @brief  Sets both wheels backward at the same speed.
  * @param  speed_cps  Target speed (CPS).
  */
-void Motion_MoveBackward(float speed_cps)
+void Motion_SetMoveBackwardSpeed(float speed_cps)
 {
     Motion_SetSpeed(-speed_cps, -speed_cps);
 }
 
 /**
- * @brief  Turn left (CCW) in place.
+ * @brief  Sets Turn left (CCW) Speed.
  * @param  speed_cps  Wheel speed during turn (CPS).
  */
-void Motion_TurnLeft(float speed_cps)
+void Motion_SetTurnLeftSpeed(float speed_cps)
 {
     Motion_SetSpeed(-speed_cps, speed_cps);
 }
 
 /**
- * @brief  Turn right (CW) in place.
+ * @brief  Sets Turn right (CW) Speed
  * @param  speed_cps  Wheel speed during turn (CPS).
  */
-void Motion_TurnRight(float speed_cps)
+void Motion_SetTurnRightSpeed(float speed_cps)
 {
     Motion_SetSpeed(speed_cps, -speed_cps);
 }

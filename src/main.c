@@ -77,8 +77,10 @@
 #include "TMPM4KyA.h"
 #include "system_TMPM4KyA.h"
 #include "modules/Timebase.h"
-#include "modules/IrSensor.h"
+#include "modules/Encoder.h"
+#include "modules/Odometry.h"
 #include "modules/Motion.h"
+#include "modules/FloodFill.h"
 
 
 void ModuleInit(void);
@@ -97,6 +99,9 @@ int main()
 		if ( Timebase_GetAndClear() ) 
 		{
             /* control Logic to be implemented */
+			Encoder_Update();
+			Odometry_Update();
+			Motion_Update();
         }
 	}
 
@@ -114,6 +119,7 @@ void ModuleInit()
 	Timebase_Init();
 	IR_Init();
 	Motion_Init();
+	FloodFill_Init();
 }
 
 

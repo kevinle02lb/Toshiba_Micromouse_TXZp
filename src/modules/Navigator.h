@@ -1,0 +1,22 @@
+/**
+ * @file        Navigator.h
+ * @brief       Robot behavior logic handler. combines FloodFill, optometry, & motion controls
+ * @version     V1.0.0
+ * @date        02-07-2026
+ *
+ * @details
+ * @note
+ *   File structure and Doxygen formatting assisted by AI.
+ *
+ * Copyright (c) [Kevin Le] 2026
+ */
+#ifndef NAVIGATOR_H
+#define NAVIGATOR_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+void Navigator_Init(void);
+void Navigator_Update(void);    /* Call at 1 kHz */
+
+#endif /* NAVIGATOR_H */

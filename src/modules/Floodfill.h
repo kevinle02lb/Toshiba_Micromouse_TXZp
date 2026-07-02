@@ -34,6 +34,9 @@ typedef enum
     WEST  = 3
 } direction_t;
 
+/**
+ * @brief  Bit position wall detection
+ */
 typedef enum
 {
     WALL_NORTH_BIT  = 0x01U,   /*!< bit 0 */
@@ -42,11 +45,24 @@ typedef enum
     WALL_WEST_BIT   = 0x08U    /*!< bit 3 */
 } wall_t;
 
+/**
+ * @brief  Action returned by FloodFill_Plan().
+ */
+typedef enum
+{
+    FLOOD_STOP = 0,     /* Mouse is inside the 2x2 goal area */
+    FLOOD_FORWARD,      /* Already facing the best direction — drive straight */
+    FLOOD_LEFT,         /* Turn 90° CCW, then drive */
+    FLOOD_RIGHT,        /* Turn 90° CW, then drive */
+    FLOOD_UTURN         /* Turn 180°, then drive */
+} flood_action_t;
+
 /* ==========================================================================
  *   Function Prototypes
  * ========================================================================== */
-void FloodFill_Init(uint8_t goal_x, uint8_t goal_y);
-void FloodFill_Run(void);
+void FloodFill_Init(void);
+flood_action_t FloodFill_Plan(void);
+void FloodFill_ReportDone(flood_action_t action);
 bool FloodFill_IsAtGoal(void);
 
 

@@ -32,10 +32,10 @@ void Motion_Init(void);
 void Motion_Update(void);
 
 void Motion_SetSpeed(float left_cps, float right_cps);
-void Motion_MoveForward(float speed_cps);
-void Motion_MoveBackward(float speed_cps);
-void Motion_TurnLeft(float speed_cps);
-void Motion_TurnRight(float speed_cps);
+void Motion_SetMoveForwardSpeed(float speed_cps);
+void Motion_SetMoveBackwardSpeed(float speed_cps);
+void Motion_SetTurnLeftSpeed(float speed_cps);
+void Motion_SetTurnRightSpeed(float speed_cps);
 void Motion_Stop(void);
 
 #endif /* MOTION_H */
