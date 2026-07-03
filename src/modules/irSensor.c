@@ -37,7 +37,28 @@
 #include "drivers/adc.h"
 #include "drivers/dma.h"
 #include "drivers/gpio.h"
-#include "systick.h"
+#include "drivers/systick.h"
+
+/* ==========================================================================
+ *   Private Types
+ * ========================================================================== */
+
+/**
+ * @brief  Single calibration point: ADC value -> distance.
+ */
+typedef struct
+{
+    uint16_t adc;       /*!< Filtered ADC reading */
+    uint16_t dist_mm;   /*!< Measured distance at that ADC */
+} ir_calpoint_t;
+
+/* ==========================================================================
+ *   Private Function Prototypes
+ * ========================================================================== */
+
+static uint16_t IR_Interpolate(uint16_t adc, const ir_calpoint_t *p0, const ir_calpoint_t *p1);
+static uint16_t IR_AdcToMm(uint16_t adc_val);
+static void     IR_UpdateDistances(void);
 
 /* ==========================================================================
  *   Module Data
@@ -48,15 +69,6 @@ static ir_sensordata_t ir_data;
 /* ==========================================================================
  *   Calibration Data (measured and hardcoded)
  * ========================================================================== */
-
-/**
- * @brief  Single calibration point: ADC value → distance.
- */
-typedef struct
-{
-    uint16_t adc;       /*!< Filtered ADC reading */
-    uint16_t dist_mm;   /*!< Measured distance at that ADC */
-} IR_CalPoint_t;
 
 /**
  * @brief  Calibration table for all sensors.
@@ -70,7 +82,7 @@ typedef struct
  *
  *   Default values are placeholders — replace with MEASUREMENTS
  */
-static const IR_CalPoint_t ir_cal[IR_CAL_POINTS] = 
+static const ir_calpoint_t ir_cal[IR_CAL_POINTS] = 
 {
     /* adc    dist_mm    */
     {  400,   150 },    /* Far: weak reflection */
@@ -106,6 +118,38 @@ void IR_Init(void)
 /* ==========================================================================
  *   Sequenced Sampling
  * ========================================================================== */
+
+
+/**
+ * @brief  Update distance_mm[] and wallDetected[] from filtered data.
+ * @note   Call at the end of IR_SampleAll().
+ */
+static void IR_UpdateDistances(void)
+{
+    int i;
+    uint16_t dist;
+
+    for (i = 0; i < IR_COUNT; i++)
+    {
+        /* Lookup distance from filtered value */
+        dist = IR_AdcToMm(ir_data.filtered[i]);
+        ir_data.distance_mm[i] = dist;
+
+        /* Wall detection with hysteresis */
+        if (wall_state[i]) 
+        {
+            /* Was seeing wall — need to get farther to clear */
+            wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM + IR_WALL_HYSTERESIS_MM));
+        } 
+        else 
+        {
+            /* Was clear — need to get closer to detect */
+            wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM - IR_WALL_HYSTERESIS_MM));
+        }
+
+        ir_data.wallDetected[i] = wall_state[i];
+    }
+}
 
 /**
  * @brief  Full ON/OFF sampling cycle for all four IR sensors.
@@ -264,7 +308,7 @@ bool IR_IsWallPresent(ir_channel_t ch)
  * @param  p1    Upper point (adc >= target).
  * @return uint16_t  Interpolated distance in mm.
  */
-uint16_t IR_Interpolate(uint16_t adc, const IR_CalPoint_t *p0, const IR_CalPoint_t *p1)
+static uint16_t IR_Interpolate(uint16_t adc, const ir_calpoint_t *p0, const ir_calpoint_t *p1)
 {
     uint32_t range_adc;
     uint32_t offset;
@@ -292,7 +336,7 @@ uint16_t IR_Interpolate(uint16_t adc, const IR_CalPoint_t *p0, const IR_CalPoint
  * @param  adc_val  Filtered 12-bit value.
  * @return uint16_t  Distance in mm, or sentinel if out of range.
  */
-uint16_t IR_AdcToMm(uint16_t adc_val)
+static uint16_t IR_AdcToMm(uint16_t adc_val)
 {
     uint8_t i;
 
@@ -320,36 +364,6 @@ uint16_t IR_AdcToMm(uint16_t adc_val)
     return IR_DIST_NO_WALL;  /* Should not reach */
 }
 
-/**
- * @brief  Update distance_mm[] and wallDetected[] from filtered data.
- * @note   Call at the end of IR_SampleAll().
- */
-void IR_UpdateDistances(void)
-{
-    int i;
-    uint16_t dist;
-
-    for (i = 0; i < IR_COUNT; i++)
-    {
-        /* Lookup distance from filtered value */
-        dist = IR_AdcToMm(ir_data.filtered[i]);
-        ir_data.distance_mm[i] = dist;
-
-        /* Wall detection with hysteresis */
-        if (wall_state[i]) 
-        {
-            /* Was seeing wall — need to get farther to clear */
-            wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM + IR_WALL_HYSTERESIS_MM));
-        } 
-        else 
-        {
-            /* Was clear — need to get closer to detect */
-            wall_state[i] = (dist < (IR_WALL_THRESHOLD_MM - IR_WALL_HYSTERESIS_MM));
-        }
-
-        ir_data.wallDetected[i] = wall_state[i];
-    }
-}
 
 /* ==========================================================================
  *   Emitter Control
