@@ -43,8 +43,6 @@ DOXYGEN: Place detailed Doxygen comments (@brief, @param, @return, @details, @no
 NAMING:
   - Modules and files: PascalCase (e.g., Timebase.c, IrSensor.c, PID.c)
   - Functions: Module_Action (e.g., Timebase_Init, Encoder_Update, PID_Compute)
-  - Structs: TypeName_t (e.g., PID_t, EncoderState_t)
-  - Enums: lower_case (e.g., motor_t, direction_t)
   - Macros/defines: UPPER_CASE (e.g., ENC_COUNTS_PER_REV)
 
 COMMENTS:

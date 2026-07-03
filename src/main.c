@@ -6,15 +6,28 @@
  * @date        05-05-2026
  *
  * @details
- *   Do change for deployment: Configure IR sensor values, Odometry wheel distance (wheelbase)
- * 
- * 
- *   Initializes system clock and all modules, then runs the main control loop.
- *   Control logic (PID, maze solving) is called from the 1 kHz tick.
+ *   Initializes the system clock and all modules, then runs the main control
+ *   loop. Every 1 kHz tick (T32A1 interval timer) runs the full pipeline in
+ *   fixed order:
+ *
+ *     Encoder_Update()   -> read quadrature counters, filter wheel speed
+ *     Odometry_Update()  -> integrate pose (x, y, heading) from encoders
+ *     Motion_Update()    -> PID speed loop, drive motor PWM (ALWAYS runs)
+ *     Navigator_Update() -> non-blocking FSM: plan -> turn -> drive -> pause
+ *
+ *   Navigator is the top-level brain: it calls FloodFill (pure planner) for
+ *   the next move, then sequences the physical turn/drive without ever
+ *   blocking, so the PID loop above keeps running every tick.
+ *
+ *   Deployment calibration (must set before real runs):
+ *   - IrSensor.c : ir_cal[] table (measured ADC-to-distance points)
+ *   - Odometry.h : WHEELBASE_MM (measure wheel-center to wheel-center)
+ *   - Encoder    : confirm forward motion yields INCREASING position
+ *   - PID.h      : tune gains for CPS-scaled error
  *
  * ___________________________________________________________________________
  * Hardware:
- *   - MCU:     TMPM4KNF10AFG (ARM Cortex-M4, 5V, 120MHz)
+ *   - MCU:     TMPM4KNF10AFG (ARM Cortex-M4, 5V, 160 MHz)
  *   - Motors:  TB67H450AFNG x2 + Pololu #5211 N20 30:1
  *   - Sensors: IR emitter/receiver pairs x4
  *   - Debug:   External CMSIS-DAP w/ Level Shifter
@@ -73,16 +86,16 @@
  */
 
 
-/* Inclutions */
+/* Inclusions */
 #include "TMPM4KyA.h"
 #include "system_TMPM4KyA.h"
-#include "modules/Timebase.h"
-#include "modules/Encoder.h"
-#include "modules/Odometry.h"
-#include "modules/Motion.h"
-#include "modules/IrSensor.h"
-#include "modules/FloodFill.h"
-#include "modules/Navigator.h"
+#include "modules/Timebase.h"    // 1 kHz tick flag (T32A1)
+#include "modules/Encoder.h"     // quadrature speed + position
+#include "modules/Odometry.h"    // pose estimate (x, y, heading)
+#include "modules/Motion.h"      // PID speed loop + motor drive
+#include "modules/IrSensor.h"    // IR wall sensing (ADC + DMA)
+#include "modules/FloodFill.h"   // pure maze planner (BFS)
+#include "modules/Navigator.h"   // top-level motion sequencer FSM
 
 
 void ModuleInit(void);
@@ -96,18 +109,20 @@ int main()
 	ModuleInit();
 	
 
-	while(1)
+	/* Control loop: fires once per 1 kHz tick. Order matters — each stage
+	 * consumes the output of the one above it within the same tick.       */
+	while (1)
 	{
-		if ( Timebase_GetAndClear() ) 
+		if (Timebase_GetAndClear())     // true once per 1 ms tick
 		{
-			Encoder_Update();
-            Odometry_Update();
-            Motion_Update();
-            Navigator_Update();
-        }
+			Encoder_Update();           // 1. read encoders, filter speed
+			Odometry_Update();          // 2. update pose from encoders
+			Motion_Update();            // 3. PID -> motor PWM (never blocks)
+			Navigator_Update();         // 4. plan/turn/drive FSM step
+		}
 	}
 
-	return 0;
+	return 0;                           // unreachable; loop never exits
 }
 
 
@@ -136,6 +151,3 @@ void ModuleInit(void)
     Navigator_Init();
     Timebase_Init();    // start tick last
 }
-
-
-

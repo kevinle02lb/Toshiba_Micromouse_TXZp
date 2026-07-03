@@ -1,6 +1,6 @@
 # 🐭 Toshiba TMPM4KNF10AFG Micromouse
 
-> **Work in Progress** — Firmware for the Micromouse
+> **Work in Progress** — Firmware for an IEEE 16×16 micromouse
 
 ```
     ╔══════════════════════════════════════════╗
@@ -30,32 +30,51 @@
 
 ## 🏗️ Architecture
 
+Everything is driven by a single 1 kHz control tick. Each tick runs four stages
+in order; each stage consumes the output of the one above it. The maze planner
+(`FloodFill`) is pure logic and never touches hardware — `Navigator` owns all
+motion and calls the planner for decisions.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         main.c                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  while(1) {                                         │    │
-│  │    if (CtrlTick_GetAndClear()) {  ◄── 1kHz tick     │    │
-│  │      // Control logic (PID, maze solver)            │    │
-│  │    }                                                │    │
-│  │  }                                                  │    │
-│  └─────────────────────────────────────────────────────┘    │
+│                          main.c                             │
+│   while(1) {                                                │
+│     if (Timebase_GetAndClear()) {   ◄── 1 kHz tick          │
+│       Encoder_Update();    // read encoders, filter speed   │
+│       Odometry_Update();   // pose (x, y, heading)          │
+│       Motion_Update();     // PID -> motor PWM (never block) │
+│       Navigator_Update();  // plan/turn/drive FSM step      │
+│     }                                                       │
+│   }                                                         │
 └──────────────────────────┬──────────────────────────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-   ┌─────────┐       ┌──────────┐       ┌──────────┐
-   │ ctrlTick│       │ motorCtrl│       │ mazeAlg  │
-   │ (1kHz)  │       │ (PWM)    │       │ (search) │
-   └────┬────┘       └────┬─────┘       └──────────┘
-        │                 │
-        ▼                 ▼
-   ┌─────────┐       ┌─────────┐
-   │ T32A1   │       │ T32A0/3 │
-   │ Interval│       │ PPG PWM │
-   │ Timer   │       │ 40kHz   │
-   └─────────┘       └─────────┘
+                           │  once per tick
+   ┌───────────┬───────────┼───────────┬────────────┐
+   ▼           ▼           ▼           ▼            ▼
+┌────────┐ ┌────────┐ ┌────────┐ ┌───────────┐ ┌──────────┐
+│Encoder │ │Odometry│ │ Motion │ │ Navigator │ │ FloodFill│
+│speed + │ │pose    │ │PID +   │ │ FSM:      │◄┤ pure BFS │
+│position│ │x,y,θ   │ │motor   │ │ plan→turn │ │ planner  │
+└───┬────┘ └───┬────┘ └───┬────┘ │ →drive    │ └────┬─────┘
+    │          │          │      └─────┬─────┘      │
+    ▼          │          ▼            │            ▼
+┌────────┐     │     ┌─────────┐       │       ┌──────────┐
+│ENC0/2  │     │     │ Motor   │       │       │ IrSensor │
+│A-ENC32 │     └────►│ TB67H450│       └──────►│ ADC+DMA  │
+│quad in │  (via     │ +T32A0/3│  (checks pose │ 4× wall  │
+└────────┘  Encoder) │ PWM PPG │   for arrival)│ sensing  │
+                     └─────────┘               └──────────┘
 ```
+
+**Control flow summary**
+
+| Stage | Module | Role |
+|-------|--------|------|
+| 1 | `Encoder` | Read A-ENC32 counters, IIR-filter wheel speed (CPS) |
+| 2 | `Odometry` | Integrate differential-drive pose from encoder deltas |
+| 3 | `Motion` | Per-wheel PID speed loop → `Motor` PWM duty |
+| 4 | `Navigator` | Non-blocking FSM; asks `FloodFill` for moves, executes them |
+| — | `FloodFill` | Pure BFS planner over discovered walls (no hardware) |
+| — | `IrSensor` | 4× IR wall detection via ADC + DMA (used by planner) |
 
 ---
 
@@ -63,28 +82,31 @@
 
 ```
 TOSHIBAMICRO/
-├── 📂 keil/                    # Keil µVision project files
-├── 📂 pcb/                     # PCB design files (Altium/KiCad)
+├── 📂 keil/                     # Keil µVision project files
+├── 📂 pcb/                      # 4-layer KiCad PCB design files
 ├── 📂 src/
-│   ├── 📄 main.c               # Entry point, control loop
-│   ├── 📄 ctrlTick.c/h         # 1kHz interval timer service
+│   ├── 📄 main.c                # Entry point, 1 kHz control loop
 │   │
-│   ├── 📂 drivers/             # Hardware abstraction layer
-│   │   ├── 📄 timer32A.c/h   # T32A driver (PWM + interval)
-│   │   ├── 📄 gpio.c/h       # Port configuration
-│   │   ├── 📄 encoder32A.c/h # Quadrature encoder (A-ENC32)
-│   │   ├── 📄 adc.c/h        # IR sensor ADC (DMA)
-│   │   ├── 📄 dma.c/h        # DMAC-B for ADC burst
-│   │   ├── 📄 systick.c/h    # Blocking delay utility
-│   │   └── 📄 ...
+│   ├── 📂 drivers/              # Register-level hardware layer
+│   │   ├── 📄 timer32A.c/h    # T32A: PWM (ch0/3) + 1 kHz interval (ch1)
+│   │   ├── 📄 gpio.c/h        # Port configuration + emitter GPIO
+│   │   ├── 📄 encoder32A.c/h  # A-ENC32 quadrature hardware read
+│   │   ├── 📄 adc.c/h         # ADC-I units A & C (IR receivers)
+│   │   ├── 📄 dma.c/h         # DMAC-B burst transfer for ADC
+│   │   └── 📄 systick.c/h     # Blocking µs/ms delay (stateless)
 │   │
-│   └── 📂 modules/             # [PLANNED] Application modules
-│       ├── 📄 motorCtrl.c/h  # PID + encoder feedback
-│       ├── 📄 mazeAlg.c/h    # Flood-fill / A* solver
-│       ├── 📄 irSensor.c/h   # IR distance processing
-│       └── 📄 motion.c/h     # Straight, turn, pivot profiles
+│   └── 📂 modules/              # Application logic layer
+│       ├── 📄 Timebase.c/h    # 1 kHz tick flag service
+│       ├── 📄 Encoder.c/h     # Filtered speed + signed position
+│       ├── 📄 Odometry.c/h    # Differential-drive pose (x, y, θ)
+│       ├── 📄 PID.c/h         # Generic PID controller math
+│       ├── 📄 Motor.c/h       # TB67H450 H-bridge direction + duty
+│       ├── 📄 Motion.c/h      # PID speed loop bridging Encoder→Motor
+│       ├── 📄 IrSensor.c/h    # IR sampling, ambient cancel, distance
+│       ├── 📄 FloodFill.c/h   # BFS flood-fill maze planner
+│       └── 📄 Navigator.c/h   # Cell-level motion sequencer (FSM)
 │
-├── 📄 readme.md                # This file
+├── 📄 readme.md                 # This file
 └── 📄 .gitignore
 ```
 
@@ -94,11 +116,11 @@ TOSHIBAMICRO/
 
 | Component | Part | Interface |
 |-----------|------|-----------|
-| **MCU** | TMPM4KNF10AFG | ARM Cortex-M4, 160 MHz |
-| **Motors** | TB67H450AFNG + Pololu #5211 N20 30:1 | T32A PPG PWM |
-| **Encoders** | A-ENC32 (on-chip) | Quadrature, 2-phase |
+| **MCU** | TMPM4KNF10AFG | ARM Cortex-M4, 160 MHz, 5 V |
+| **Motors** | TB67H450AFNG + Pololu #5211 N20 30:1 | T32A PPG PWM @ 40 kHz |
+| **Encoders** | A-ENC32 (on-chip) | Quadrature, 12 CPR × 29.89 ≈ 360/rev |
 | **IR Sensors** | IR LED + phototransistor ×4 | ADC-I + DMA |
-| **Debug** | CMIS-DAP + Level Shifter | SWD |
+| **Debug** | CMSIS-DAP + Level Shifter | SWD |
 
 ### Pin Map
 
@@ -158,29 +180,62 @@ TOSHIBAMICRO/
 
 ---
 
+## 🧭 Navigation Model
+
+`FloodFill` and `Navigator` deliberately use **relative** moves at their
+boundary, so neither needs to agree on an absolute compass:
+
+- `FloodFill_Plan()` returns one of: `FORWARD`, `TURN_LEFT`, `TURN_RIGHT`,
+  `TURN_AROUND`, `STOP`. It tracks its own grid cell + heading in the maze.
+- `Navigator` converts each move into a target heading in radians, tracked as
+  an **exact grid index** (0/±90°/180°) — never by accumulating odometry — so
+  per-turn error does not compound across a run.
+- Odometry is used only to *check* when a turn/drive is complete, never to
+  *define* the next target.
+
+> ⚠️ **Load-bearing invariant:** the N→E→S→W cycle must be clockwise in both
+> `FloodFill` and `Navigator`'s heading table. Renumbering either breaks turns.
+
+---
+
 ## 🚀 Build & Flash
 
 ```bash
 # Open in Keil µVision
 # Target: TMPM4KNF10AFG
-# Debug: CMIS-DAP
-# Flash: On-chip 512KB
+# Debug:  CMSIS-DAP
+# Flash:  On-chip 512 KB
 ```
 
 ---
 
-## 📝 Module Planning (TODO)
+## 🎯 Deployment Calibration
+
+Before real runs, these must be measured/tuned on the actual robot:
+
+| Where | What | Why |
+|-------|------|-----|
+| `Encoder` | Confirm forward → **increasing** position | Reversed sign turns PID into positive feedback (runaway) |
+| `Odometry.h` | `WHEELBASE_MM` (wheel-center to center) | Wrong value → every turn over/under-rotates |
+| `IrSensor.c` | `ir_cal[]` ADC→distance points | Placeholder values; wall detection unreliable until measured |
+| `PID.h` | Gains for CPS-scaled error | Error is ~thousands (CPS); default `Kp` saturates instantly |
+
+---
+
+## 📝 Module Status
 
 | Module | Status | Description |
 |--------|--------|-------------|
-| `ctrlTick` | ✅ Done | 1kHz control loop timing |
-| `motorCtrl` | 🔄 Planned | PID velocity/position control |
-| `encoder` | ✅ Driver done | Hardware quadrature read |
-| `irSensor` | 🔄 Planned | Distance measurement + calibration |
-| `mazeAlg` | 🔄 Planned | Flood-fill or A* maze solver |
-| `motion` | 🔄 Planned | Straight, smooth turn, pivot profiles |
-| `wallFollow` | 🔄 Planned | PD wall-following controller |
-| `speedRun` | 🔄 Planned | Optimized path execution |
+| `Timebase` | ✅ Done | 1 kHz control tick flag |
+| `Encoder` | ✅ Done | Filtered speed + signed position |
+| `Odometry` | ✅ Done | Differential-drive pose estimate |
+| `PID` | ✅ Done | Generic PID controller |
+| `Motor` | ✅ Done | H-bridge direction + duty |
+| `Motion` | ✅ Done | PID speed loop (Encoder→Motor) |
+| `IrSensor` | ✅ Done | IR sampling + distance (needs calibration) |
+| `FloodFill` | ✅ Done | BFS flood-fill planner |
+| `Navigator` | 🔄 Bring-up | Motion FSM; verify on hardware |
+| `speedRun` | 🔄 Planned | Optimized second-pass path execution |
 
 ---
 
@@ -191,8 +246,9 @@ TOSHIBAMICRO/
 - [RM-A-ENC32-A Encoder Reference](https://toshiba.semicon-storage.com/info/RM-A-ENC32-A_en_20250221.pdf)
 - [RM-ADC-I Reference](https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf)
 - [RM-DMAC-B DMA Reference](https://toshiba.semicon-storage.com/info/RM-DMAC-B_en_20241031.pdf)
+- [Pololu #5211 Motor Datasheet](https://www.pololu.com/file/0J1487/pololu-micro-metal-gearmotors-rev-6-2.pdf)
 
 ---
 
-> **Author:** Kevin Le  
-> **Date:** 2026  
+> **Author:** Kevin Le
+> **Date:** 2026
