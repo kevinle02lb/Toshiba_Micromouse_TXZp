@@ -649,7 +649,7 @@ floodfill_t FloodFill_Plan(void)
 }
 
 /**
- * @brief  Report that the last planned action is physically complete.
+ * @brief  Report that the last planned action is physically complete. Updates position of the mouse.
  * @param  action  The action that was executed.
  * @details
  *   Only FLOODFILL_FORWARD changes cell position.

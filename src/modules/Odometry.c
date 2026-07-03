@@ -116,13 +116,9 @@ void Odometry_Update(void)
 
     // Normalize heading to [-PI, PI]
     if (odo.heading_rad > M_PI) 
-    {
         odo.heading_rad -= M_2PI;
-    } 
     else if (odo.heading_rad < -M_PI) 
-    {
         odo.heading_rad += M_2PI;
-    }
 
     // Store encoder positions for next tick
     odo.prev_left_pos = left_pos;

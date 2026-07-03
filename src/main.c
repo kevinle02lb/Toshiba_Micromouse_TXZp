@@ -80,6 +80,7 @@
 #include "modules/Encoder.h"
 #include "modules/Odometry.h"
 #include "modules/Motion.h"
+#include "modules/IrSensor.h"
 #include "modules/FloodFill.h"
 #include "modules/Navigator.h"
 
@@ -99,7 +100,6 @@ int main()
 	{
 		if ( Timebase_GetAndClear() ) 
 		{
-            /* control Logic to be implemented */
 			Encoder_Update();
             Odometry_Update();
             Motion_Update();
@@ -113,19 +113,29 @@ int main()
 
 
 /**
- * @brief  Initialize all relevant Modules
- * @note   Must be called after SystemInit()
+ * @brief  Initialize all modules in dependency order.
+ * @note   Call once after SystemInit().
+ *
+ *   Each driver configures its own GPIO port internally, so no separate
+ *   GPIO_Init() pass is needed. SysTick needs no init (stateless).
+ *
+ *   Order:
+ *   1. Motion   -> Encoder + Motor (PWM T32A0/3, encoder ports) up first
+ *   2. Odometry -> caches encoder position, so must follow Motion
+ *   3. IR       -> DMAC + ADC + emitter ports; ADC uses SysTick_us (stateless)
+ *   4. FloodFill-> planner; samples IR on first Plan(), so IR must precede it
+ *   5. Navigator-> depends on FloodFill + Motion
+ *   6. Timebase -> starts 1 kHz tick LAST
  */
-void ModuleInit()
+void ModuleInit(void)
 {
-	Encoder_Init();
-    Odometry_Init();
-    Motion_Init();
+    Motion_Init();      // -> Encoder_Init() + Motor_Init()
+    Odometry_Init();    // reads Encoder position
+    IR_Init();          // -> DMAC_Init() + ADC_Init() + emitter ports
     FloodFill_Init();
     Navigator_Init();
-    Timebase_Init();
+    Timebase_Init();    // start tick last
 }
-
 
 
 

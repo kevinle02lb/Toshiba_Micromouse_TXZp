@@ -32,10 +32,14 @@ void Timebase_Init(void)
  */
 bool Timebase_GetAndClear(void)
 {
-    __disable_irq();
-    bool wasSet = T32A01AC_IRQ_Fire;
-    if (wasSet) 
-        T32A01AC_IRQ_Fire = false;
-    __enable_irq();
-    return wasSet;
+    if (T32A01AC_IRQ_Fire)                      /* Check first without disabling */
+    {
+        __disable_irq();                        /* Only disable when we need to clear */
+        bool wasSet = T32A01AC_IRQ_Fire;        /* Re-read inside critical section */
+        if (wasSet)                             /* Double-check in case ISR fired between */
+            T32A01AC_IRQ_Fire = false;
+        __enable_irq();
+        return wasSet;
+    }
+    return false;
 }

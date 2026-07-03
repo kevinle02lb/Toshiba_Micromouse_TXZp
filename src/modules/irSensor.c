@@ -93,7 +93,7 @@ static bool wall_state[IR_COUNT] = {false, false, false, false};
 
 /**
  * @brief  Initializes ADC and GPIO for IR emitters.
- * @note   Make sure DMAC is initialized before this is called.
+ * @note   Make sure DMAC is initialized first before IR related inits
  */
 void IR_Init(void)
 {

@@ -96,45 +96,40 @@ float PID_Update(pid_t *pid, float error)
 {
     float proportional_term, integral_term, derivative_term, output;
 
-    /* [1] Proportional Term */
+    // [1] Proportional
     proportional_term = pid->kp * error;
 
-    /* [2] Integral Term */
+    // [2] Integral (accumulate, then clamp to spendable range)
     pid->integral += error * pid->dt;
 
-    /* Integral clamping (anti-windup) - only if ki is non-zero */
-    if (pid->ki != 0.0f) 
+    if (pid->ki != 0.0f)                             // skip clamp math if I-term unused
     {
         float max_integral = pid->out_max / pid->ki;
         float min_integral = pid->out_min / pid->ki;
-        if (pid->integral > max_integral) 
-        {
+
+        if (pid->integral > max_integral)
             pid->integral = max_integral;
-        } 
-        else if (pid->integral < min_integral) 
-        {
+        else if (pid->integral < min_integral)
             pid->integral = min_integral;
-        }
     }
-    
+
     integral_term = pid->ki * pid->integral;
 
-    /* [3] Derivative Term */
+    // [3] Derivative (rate of change of error) — uses kd, NOT ki
     pid->derivative = (error - pid->prev_error) / pid->dt;
-    derivative_term = pid->ki * pid->derivative;
-    
-    /* [4] Store current error for next cycle */
+    derivative_term = pid->kd * pid->derivative;
+
+    // [4] Save error for next tick's derivative
     pid->prev_error = error;
 
-    /* [5] Output */
+    // [5] Sum and clamp
     output = proportional_term + integral_term + derivative_term;
 
-    /* Clamp output */
     if (output > pid->out_max)
         output = pid->out_max;
     else if (output < pid->out_min)
         output = pid->out_min;
-    
+
     return output;
 }
 
