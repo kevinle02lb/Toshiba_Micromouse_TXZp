@@ -18,7 +18,7 @@
  */
 
 #include "Encoder.h"
-#include "encoder32A.h"
+#include "drivers/encoder32A.h"
 
 /* ==========================================================================
  *   PHYSICAL CALCULATIONS & UNIT CONVERSIONS

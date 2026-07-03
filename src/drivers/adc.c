@@ -66,7 +66,7 @@
  *   CURRENTLY: DMA handles data movement. These interrupts are NOT enabled
  *   in the NVIC, so the CPU never enters the handlers below.
  *   The handlers are stubs for future use.
- * ========================================================================== *
+ * ========================================================================== */
 
  
 /* ==========================================================================
