@@ -26,43 +26,46 @@
 #define MAZE_SIZE                   16U
 #define CELL_UNVISITED              255U        /*!< 2^8 - 1 = 256 - 1 = 255 */
 
-typedef enum
+/** 
+ * @brief Cardinal directions (used for wall indexing and neighbour offsets) 
+ */
+typedef enum 
 {
-    NORTH = 0,
-    EAST  = 1,
-    SOUTH = 2,
-    WEST  = 3
-} direction_t;
+    FLOODFILL_DIR_NORTH = 0,
+    FLOODFILL_DIR_EAST,
+    FLOODFILL_DIR_SOUTH,
+    FLOODFILL_DIR_WEST
+} floodfill_dir_t;
 
 /**
  * @brief  Bit position wall detection
  */
-typedef enum
+typedef enum 
 {
-    WALL_NORTH_BIT  = 0x01U,   /*!< bit 0 */
-    WALL_EAST_BIT   = 0x02U,   /*!< bit 1 */
-    WALL_SOUTH_BIT  = 0x04U,   /*!< bit 2 */
-    WALL_WEST_BIT   = 0x08U    /*!< bit 3 */
-} wall_t;
+    FLOODFILL_WALL_NORTH_BIT = 0x01U,   /*!< bit 0 */
+    FLOODFILL_WALL_EAST_BIT  = 0x02U,   /*!< bit 1 */
+    FLOODFILL_WALL_SOUTH_BIT = 0x04U,   /*!< bit 2 */
+    FLOODFILL_WALL_WEST_BIT  = 0x08U    /*!< bit 3 */
+} floodfill_wall_bit_t;
 
 /**
  * @brief  Action returned by FloodFill_Plan().
  */
-typedef enum
+typedef enum 
 {
-    FLOOD_STOP = 0,     /* Mouse is inside the 2x2 goal area */
-    FLOOD_FORWARD,      /* Already facing the best direction — drive straight */
-    FLOOD_LEFT,         /* Turn 90° CCW, then drive */
-    FLOOD_RIGHT,        /* Turn 90° CW, then drive */
-    FLOOD_UTURN         /* Turn 180°, then drive */
-} flood_action_t;
+    FLOODFILL_STOP = 0,       /*!< At goal, do nothing */
+    FLOODFILL_FORWARD,        /*!< Drive straight into next cell */
+    FLOODFILL_TURN_LEFT,      /*!< Turn 90° CCW, then drive */
+    FLOODFILL_TURN_RIGHT,     /*!< Turn 90° CW, then drive */
+    FLOODFILL_TURN_AROUND     /*!< Turn 180°, then drive */
+} floodfill_t;
 
 /* ==========================================================================
  *   Function Prototypes
  * ========================================================================== */
 void FloodFill_Init(void);
-flood_action_t FloodFill_Plan(void);
-void FloodFill_ReportDone(flood_action_t action);
+floodfill_t FloodFill_Plan(void);
+void FloodFill_ReportDone(floodfill_t action);
 bool FloodFill_IsAtGoal(void);
 
 

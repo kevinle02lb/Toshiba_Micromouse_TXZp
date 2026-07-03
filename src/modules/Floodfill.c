@@ -96,13 +96,13 @@ static uint8_t dist[MAZE_SIZE][MAZE_SIZE];
  * @brief  Mouse position and heading
  * @details
  *   - mouse_x, mouse_y: Current cell (0-15)
- *   - mouse_heading: Which way the mouse faces (NORTH/EAST/SOUTH/WEST)
+ *   - mouse_heading: Which way the mouse faces (FLOODFILL_DIR_NORTH/EAST/SOUTH/WEST)
  *
  *   These are updated by FloodFill_ReportDone() after each move.
  *   They are NOT read from Odometry to keep the module self-contained.
  */
 static uint8_t mouse_x, mouse_y;
-static direction_t mouse_heading;
+static floodfill_dir_t mouse_heading;
 
 /* ==========================================================================
  *   Queue
@@ -129,9 +129,9 @@ typedef struct
 {
     uint8_t x;
     uint8_t y;
-} Cell_t;
+} cell_t;
 
-static Cell_t queue[QUEUE_SIZE];
+static cell_t queue[QUEUE_SIZE];
 static uint16_t queue_head, queue_tail;
 
 /* ==========================================================================
@@ -175,7 +175,7 @@ static void Queue_Enqueue(uint8_t x, uint8_t y)
  *   Dequeue = remove from head. head increments.
  *   Returns false if head == tail (queue empty).
  */
-static bool Queue_Dequeue(Cell_t *cell)
+static bool Queue_Dequeue(cell_t *cell)
 {
     if (queue_head == queue_tail)           /* Empty check */
         return false;                       /* Queue Empty */
@@ -192,7 +192,7 @@ static bool Queue_Dequeue(Cell_t *cell)
 
 /**
  * @brief  Get absolute wall bit for "front" relative to heading.
- * @param  heading  Current mouse heading (NORTH/EAST/SOUTH/WEST)
+ * @param  heading  Current mouse heading (FLOODFILL_DIR_NORTH/EAST/SOUTH/WEST)
  * @return uint8_t  Corresponding wall bit
  *
  * @details
@@ -200,57 +200,57 @@ static bool Queue_Dequeue(Cell_t *cell)
  *            If mouse faces EAST,  front wall = EAST wall.
  *   This converts the mouse's relative "front" to an absolute direction.
  */
-static uint8_t FloodFill_GetFrontWall(direction_t heading)
+static uint8_t FloodFill_GetFrontWall(floodfill_dir_t heading)
 {
     switch (heading)
     {
-        case NORTH: return WALL_NORTH_BIT;
-        case EAST:  return WALL_EAST_BIT;
-        case SOUTH: return WALL_SOUTH_BIT;
-        case WEST:  return WALL_WEST_BIT;
-        default:    return WALL_NORTH_BIT;
+        case FLOODFILL_DIR_NORTH: return FLOODFILL_WALL_NORTH_BIT;
+        case FLOODFILL_DIR_EAST:  return FLOODFILL_WALL_EAST_BIT;
+        case FLOODFILL_DIR_SOUTH: return FLOODFILL_WALL_SOUTH_BIT;
+        case FLOODFILL_DIR_WEST:  return FLOODFILL_WALL_WEST_BIT;
+        default:    return FLOODFILL_WALL_NORTH_BIT;
     }
 }
 
 /**
  * @brief  Get absolute wall bit for "left" relative to heading.
- * @param  heading  Current mouse heading (NORTH/EAST/SOUTH/WEST)
+ * @param  heading  Current mouse heading (FLOODFILL_DIR_NORTH/EAST/SOUTH/WEST)
  * @return uint8_t  Corresponding wall bit
  *
  * @details
  *   Example: If mouse faces NORTH, left wall = WEST wall.
  *            If mouse faces EAST,  left wall = NORTH wall.
  */
-static uint8_t FloodFill_GetLeftWall(direction_t heading)
+static uint8_t FloodFill_GetLeftWall(floodfill_dir_t heading)
 {
     switch (heading)
     {
-        case NORTH: return WALL_WEST_BIT;
-        case EAST:  return WALL_NORTH_BIT;
-        case SOUTH: return WALL_EAST_BIT;
-        case WEST:  return WALL_SOUTH_BIT;
-        default:    return WALL_WEST_BIT;
+        case FLOODFILL_DIR_NORTH: return FLOODFILL_WALL_WEST_BIT;
+        case FLOODFILL_DIR_EAST:  return FLOODFILL_WALL_NORTH_BIT;
+        case FLOODFILL_DIR_SOUTH: return FLOODFILL_WALL_EAST_BIT;
+        case FLOODFILL_DIR_WEST:  return FLOODFILL_WALL_SOUTH_BIT;
+        default:    return FLOODFILL_WALL_WEST_BIT;
     }
 }
 
 /**
  * @brief  Get absolute wall bit for "right" relative to heading.
- * @param  heading  Current mouse heading (NORTH/EAST/SOUTH/WEST)
+ * @param  heading  Current mouse heading (FLOODFILL_DIR_NORTH/EAST/SOUTH/WEST)
  * @return uint8_t  Corresponding wall bit
  *
  * @details
  *   Example: If mouse faces NORTH, right wall = EAST wall.
  *            If mouse faces EAST,  right wall = SOUTH wall.
  */
-static uint8_t FloodFill_GetRightWall(direction_t heading)
+static uint8_t FloodFill_GetRightWall(floodfill_dir_t heading)
 {
     switch (heading)
     {
-        case NORTH: return WALL_EAST_BIT;
-        case EAST:  return WALL_SOUTH_BIT;
-        case SOUTH: return WALL_WEST_BIT;
-        case WEST:  return WALL_NORTH_BIT;
-        default:    return WALL_EAST_BIT;
+        case FLOODFILL_DIR_NORTH: return FLOODFILL_WALL_EAST_BIT;
+        case FLOODFILL_DIR_EAST:  return FLOODFILL_WALL_SOUTH_BIT;
+        case FLOODFILL_DIR_SOUTH: return FLOODFILL_WALL_WEST_BIT;
+        case FLOODFILL_DIR_WEST:  return FLOODFILL_WALL_NORTH_BIT;
+        default:    return FLOODFILL_WALL_EAST_BIT;
     }
 }
 
@@ -262,7 +262,7 @@ static uint8_t FloodFill_GetRightWall(direction_t heading)
  * @brief  Store a wall and its symmetric neighbor wall.
  * @param  x         Cell x coordinate (0-15)
  * @param  y         Cell y coordinate (0-15)
- * @param  wall_bit  WALL_NORTH_BIT, WALL_EAST_BIT, WALL_SOUTH_BIT, or WALL_WEST_BIT
+ * @param  wall_bit  FLOODFILL_WALL_NORTH_BIT, FLOODFILL_WALL_EAST_BIT, FLOODFILL_WALL_SOUTH_BIT, or FLOODFILL_WALL_WEST_BIT
  * @details
  *   Writes wall to current cell AND the adjacent cell.
  *
@@ -275,30 +275,30 @@ static uint8_t FloodFill_GetRightWall(direction_t heading)
  *
  *   Bounds checks prevent writing outside the 16x16 maze.
  */
-static void FloodFill_SetWall(uint8_t x, uint8_t y, wall_t wall_bit)
+static void FloodFill_SetWall(uint8_t x, uint8_t y, floodfill_wall_bit_t wall_bit)
 {
     walls[x][y] |= (uint8_t)wall_bit;
 
     switch(wall_bit)
     {
-        case (WALL_NORTH_BIT):
+        case (FLOODFILL_WALL_NORTH_BIT):
             if (y + 1 < MAZE_SIZE)
-                walls[x][y + 1] |= (uint8_t)WALL_SOUTH_BIT;
+                walls[x][y + 1] |= (uint8_t)FLOODFILL_WALL_SOUTH_BIT;
             break;
 
-        case (WALL_EAST_BIT):
+        case (FLOODFILL_WALL_EAST_BIT):
             if (x + 1 < MAZE_SIZE)
-                walls[x + 1][y] |= (uint8_t)WALL_WEST_BIT;
+                walls[x + 1][y] |= (uint8_t)FLOODFILL_WALL_WEST_BIT;
             break;
 
-        case (WALL_SOUTH_BIT):
+        case (FLOODFILL_WALL_SOUTH_BIT):
             if (y > 0)
-                walls[x][y - 1] |= (uint8_t)WALL_NORTH_BIT;
+                walls[x][y - 1] |= (uint8_t)FLOODFILL_WALL_NORTH_BIT;
             break;
 
-        case (WALL_WEST_BIT):
+        case (FLOODFILL_WALL_WEST_BIT):
             if (x > 0)
-                walls[x - 1][y] |= (uint8_t)WALL_EAST_BIT;
+                walls[x - 1][y] |= (uint8_t)FLOODFILL_WALL_EAST_BIT;
             break;
 
         default:
@@ -334,9 +334,9 @@ static void FloodFill_ScanWalls(void)
     left  = IR_IsWallPresent(IR_FAR_LEFT);
     right = IR_IsWallPresent(IR_FAR_RIGHT);
 
-    if (front) FloodFill_SetWall(mouse_x, mouse_y, (wall_t)FloodFill_GetFrontWall(mouse_heading));
-    if (left)  FloodFill_SetWall(mouse_x, mouse_y, (wall_t)FloodFill_GetLeftWall(mouse_heading));
-    if (right) FloodFill_SetWall(mouse_x, mouse_y, (wall_t)FloodFill_GetRightWall(mouse_heading));
+    if (front) FloodFill_SetWall(mouse_x, mouse_y, (floodfill_wall_bit_t)FloodFill_GetFrontWall(mouse_heading));
+    if (left)  FloodFill_SetWall(mouse_x, mouse_y, (floodfill_wall_bit_t)FloodFill_GetLeftWall(mouse_heading));
+    if (right) FloodFill_SetWall(mouse_x, mouse_y, (floodfill_wall_bit_t)FloodFill_GetRightWall(mouse_heading));
 }
 
 /* ==========================================================================
@@ -367,7 +367,7 @@ static void FloodFill_ScanWalls(void)
 static void FloodFill_Update(void)
 {
     uint8_t x, y;
-    Cell_t cell;
+    cell_t cell;
 
     /* Reset all Distances */
     for (x = 0; x < MAZE_SIZE; x++)
@@ -391,7 +391,7 @@ static void FloodFill_Update(void)
         x = cell.x; y = cell.y;
 
         /* NORTH neighbor */
-        if ((y + 1 < MAZE_SIZE) && ((walls[x][y] & WALL_NORTH_BIT) == 0))
+        if ((y + 1 < MAZE_SIZE) && ((walls[x][y] & FLOODFILL_WALL_NORTH_BIT) == 0))
         {
             if (dist[x][y + 1] == CELL_UNVISITED)
             {
@@ -401,7 +401,7 @@ static void FloodFill_Update(void)
         }
 
         /* EAST neighbor */
-        if ((x + 1 < MAZE_SIZE) && ((walls[x][y] & WALL_EAST_BIT) == 0))
+        if ((x + 1 < MAZE_SIZE) && ((walls[x][y] & FLOODFILL_WALL_EAST_BIT) == 0))
         {
             if (dist[x + 1][y] == CELL_UNVISITED)
             {
@@ -411,7 +411,7 @@ static void FloodFill_Update(void)
         }
 
         /* SOUTH neighbor */
-        if ((y > 0) && ((walls[x][y] & WALL_SOUTH_BIT) == 0))
+        if ((y > 0) && ((walls[x][y] & FLOODFILL_WALL_SOUTH_BIT) == 0))
         {
             if (dist[x][y - 1] == CELL_UNVISITED)
             {
@@ -421,7 +421,7 @@ static void FloodFill_Update(void)
         }
 
         /* WEST neighbor */
-        if ((x > 0) && ((walls[x][y] & WALL_WEST_BIT) == 0))
+        if ((x > 0) && ((walls[x][y] & FLOODFILL_WALL_WEST_BIT) == 0))
         {
             if (dist[x - 1][y] == CELL_UNVISITED)
             {
@@ -438,7 +438,7 @@ static void FloodFill_Update(void)
 
 /**
  * @brief  Pick the neighbor with the lowest distance to goal.
- * @return direction_t  Best direction to move (NORTH/EAST/SOUTH/WEST)
+ * @return flood_dir_t  Best direction to move (FLOODFILL_DIR_NORTH/EAST/SOUTH/WEST)
  * @details
  *   Checks all 4 neighbors of the current cell.
  *   - Must be within maze bounds (0-15)
@@ -446,15 +446,15 @@ static void FloodFill_Update(void)
  *   - Picks the one with the smallest dist value
  *
  *   If multiple neighbors have the same lowest distance,
- *   the first one checked wins (NORTH, EAST, SOUTH, WEST order).
+ *   the first one checked wins (FLOODFILL_DIR_NORTH, EAST, SOUTH, WEST order).
  *
  *   The mouse always moves "downhill" toward lower distances,
  *   which guarantees it's following the shortest path to goal.
  */
-static direction_t FloodFill_GetNextDir(void)
+static floodfill_dir_t FloodFill_GetNextDir(void)
 {
     uint8_t best_dist;
-    direction_t best_dir;
+    floodfill_dir_t best_dir;
 
     /* Start with worst-case values so any valid neighbor beats them */
     best_dist = CELL_UNVISITED;   /* 255 = "unreachable" */
@@ -466,12 +466,12 @@ static direction_t FloodFill_GetNextDir(void)
      *  - Is the NORTH wall bit clear in the current cell?
      *  - Is its distance lower than what we have seen so far?
      * ------------------------------------------------------------------ */
-    if ((mouse_y + 1 < MAZE_SIZE) && ((walls[mouse_x][mouse_y] & WALL_NORTH_BIT) == 0))
+    if ((mouse_y + 1 < MAZE_SIZE) && ((walls[mouse_x][mouse_y] & FLOODFILL_WALL_NORTH_BIT) == 0))
     {
         if (dist[mouse_x][mouse_y + 1] < best_dist)
         {
             best_dist = dist[mouse_x][mouse_y + 1];
-            best_dir  = NORTH;
+            best_dir  = FLOODFILL_DIR_NORTH;
         }
     }
 
@@ -481,12 +481,12 @@ static direction_t FloodFill_GetNextDir(void)
      *  - Is the EAST wall bit clear in the current cell?
      *  - Is its distance lower than the current best?
      * ------------------------------------------------------------------ */
-    if ((mouse_x + 1 < MAZE_SIZE) && ((walls[mouse_x][mouse_y] & WALL_EAST_BIT) == 0))
+    if ((mouse_x + 1 < MAZE_SIZE) && ((walls[mouse_x][mouse_y] & FLOODFILL_WALL_EAST_BIT) == 0))
     {
         if (dist[mouse_x + 1][mouse_y] < best_dist)
         {
             best_dist = dist[mouse_x + 1][mouse_y];
-            best_dir  = EAST;
+            best_dir  = FLOODFILL_DIR_EAST;
         }
     }
 
@@ -496,12 +496,12 @@ static direction_t FloodFill_GetNextDir(void)
      *  - Is the SOUTH wall bit clear in the current cell?
      *  - Is its distance lower than the current best?
      * ------------------------------------------------------------------ */
-    if ((mouse_y > 0) && ((walls[mouse_x][mouse_y] & WALL_SOUTH_BIT) == 0))
+    if ((mouse_y > 0) && ((walls[mouse_x][mouse_y] & FLOODFILL_WALL_SOUTH_BIT) == 0))
     {
         if (dist[mouse_x][mouse_y - 1] < best_dist)
         {
             best_dist = dist[mouse_x][mouse_y - 1];
-            best_dir  = SOUTH;
+            best_dir  = FLOODFILL_DIR_SOUTH;
         }
     }
 
@@ -511,12 +511,12 @@ static direction_t FloodFill_GetNextDir(void)
      *  - Is the WEST wall bit clear in the current cell?
      *  - Is its distance lower than the current best?
      * ------------------------------------------------------------------ */
-    if ((mouse_x > 0) && ((walls[mouse_x][mouse_y] & WALL_WEST_BIT) == 0))
+    if ((mouse_x > 0) && ((walls[mouse_x][mouse_y] & FLOODFILL_WALL_WEST_BIT) == 0))
     {
         if (dist[mouse_x - 1][mouse_y] < best_dist)
         {
             best_dist = dist[mouse_x - 1][mouse_y];
-            best_dir  = WEST;
+            best_dir  = FLOODFILL_DIR_WEST;
         }
     }
 
@@ -544,7 +544,7 @@ void FloodFill_Init(void)
 
     mouse_x = 0;
     mouse_y = 0;
-    mouse_heading = NORTH;
+    mouse_heading = FLOODFILL_DIR_NORTH;
 
     for (x = 0; x < MAZE_SIZE; x++)
     {
@@ -602,19 +602,19 @@ bool FloodFill_IsAtGoal(void)
  *      - Pick one with lowest dist
  *
  *   4. Compare next_dir to mouse_heading:
- *      - Same: FLOOD_FORWARD
- *      - 90° CCW: FLOOD_LEFT
- *      - 90° CW: FLOOD_RIGHT
- *      - 180°: FLOOD_UTURN
+ *      - Same: FLOODFILL_FORWARD
+ *      - 90° CCW: FLOODFILL_TURN_LEFT
+ *      - 90° CW: FLOODFILL_TURN_RIGHT
+ *      - 180°: FLOODFILL_TURN_AROUND
  *
  *   Does NOT start any motion. Navigator must execute and report done.
  */
-flood_action_t FloodFill_Plan(void)
+floodfill_t FloodFill_Plan(void)
 {
-    direction_t next_dir;
+    floodfill_dir_t next_dir;
 
     if (FloodFill_IsAtGoal())
-        return FLOOD_STOP;
+        return FLOODFILL_STOP;
 
     FloodFill_ScanWalls();
     FloodFill_Update();
@@ -623,28 +623,28 @@ flood_action_t FloodFill_Plan(void)
     /* Update internal heading immediately. Position only updates on ReportDone. */
     if (next_dir == mouse_heading)
     {
-        return FLOOD_FORWARD;
+        return FLOODFILL_FORWARD;
     }
-    else if ((next_dir == NORTH && mouse_heading == EAST)  ||
-             (next_dir == EAST  && mouse_heading == SOUTH) ||
-             (next_dir == SOUTH && mouse_heading == WEST)  ||
-             (next_dir == WEST  && mouse_heading == NORTH))
+    else if ((next_dir == FLOODFILL_DIR_NORTH && mouse_heading == FLOODFILL_DIR_EAST)  ||
+             (next_dir == FLOODFILL_DIR_EAST  && mouse_heading == FLOODFILL_DIR_SOUTH) ||
+             (next_dir == FLOODFILL_DIR_SOUTH && mouse_heading == FLOODFILL_DIR_WEST)  ||
+             (next_dir == FLOODFILL_DIR_WEST  && mouse_heading == FLOODFILL_DIR_NORTH))
     {
         mouse_heading = next_dir;
-        return FLOOD_LEFT;
+        return FLOODFILL_TURN_LEFT;
     }
-    else if ((next_dir == NORTH && mouse_heading == WEST)  ||
-             (next_dir == WEST  && mouse_heading == SOUTH) ||
-             (next_dir == SOUTH && mouse_heading == EAST)  ||
-             (next_dir == EAST  && mouse_heading == NORTH))
+    else if ((next_dir == FLOODFILL_DIR_NORTH && mouse_heading == FLOODFILL_DIR_WEST)  ||
+             (next_dir == FLOODFILL_DIR_WEST  && mouse_heading == FLOODFILL_DIR_SOUTH) ||
+             (next_dir == FLOODFILL_DIR_SOUTH && mouse_heading == FLOODFILL_DIR_EAST)  ||
+             (next_dir == FLOODFILL_DIR_EAST  && mouse_heading == FLOODFILL_DIR_NORTH))
     {
         mouse_heading = next_dir;
-        return FLOOD_RIGHT;
+        return FLOODFILL_TURN_RIGHT;
     }
     else
     {
         mouse_heading = next_dir;
-        return FLOOD_UTURN;
+        return FLOODFILL_TURN_AROUND;
     }
 }
 
@@ -652,19 +652,19 @@ flood_action_t FloodFill_Plan(void)
  * @brief  Report that the last planned action is physically complete.
  * @param  action  The action that was executed.
  * @details
- *   Only FLOOD_FORWARD changes cell position.
+ *   Only FLOODFILL_FORWARD changes cell position.
  *   Turns only changed heading, already done in Plan().
  */
-void FloodFill_ReportDone(flood_action_t action)
+void FloodFill_ReportDone(floodfill_t action)
 {
-    if (action == FLOOD_FORWARD)
+    if (action == FLOODFILL_FORWARD)
     {
         switch (mouse_heading)
         {
-            case NORTH: mouse_y++; break;
-            case EAST:  mouse_x++; break;
-            case SOUTH: mouse_y--; break;
-            case WEST:  mouse_x--; break;
+            case FLOODFILL_DIR_NORTH: mouse_y++; break;
+            case FLOODFILL_DIR_EAST:  mouse_x++; break;
+            case FLOODFILL_DIR_SOUTH: mouse_y--; break;
+            case FLOODFILL_DIR_WEST:  mouse_x--; break;
         }
     }
     /* LEFT, RIGHT, UTURN: heading already updated in Plan(), no position change */

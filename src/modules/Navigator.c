@@ -1,13 +1,15 @@
 /**
  * @file        Navigator.c
- * @brief       
+ * @brief       Cell-level motion sequencer for micromouse.
  * @version     V1.0.0
  * @date        02-07-2026
  *
  * @details
- *   
+ *   Bridges FloodFill (planner) with Motion/Odometry (execution).
+ *   Runs a state machine at 1 kHz to sequence: plan → turn → drive → pause → repeat.
+ *
  * @note
- *   File structure and Doxygen formatting assisted by AI.
+ *   Call Navigator_Update() exactly once per 1 kHz control tick.
  *
  * Copyright (c) [Kevin Le] 2026
  */
@@ -22,6 +24,13 @@
 #define DIST_TOLERANCE_MM   5.0f
 #define PAUSE_TICKS         50U
 
+/* ==========================================================================
+ *   State Machine
+ * ========================================================================== */
+
+/**
+ * @brief  Navigator internal states.
+ */
 typedef enum
 {
     NAV_PLANNING,
@@ -31,114 +40,104 @@ typedef enum
     NAV_FINISHED
 } nav_state_t;
 
+/* ==========================================================================
+ *   Private Data
+ * ========================================================================== */
+
 static nav_state_t nav_state;
-static flood_action_t last_action;
+static floodfill_t last_action;
 
 static float target_heading_rad;
 static float drive_start_x_mm;
 static float drive_start_y_mm;
 static uint16_t pause_tick_count;
 
-static float NormalizeAngle(float angle);
+/* ==========================================================================
+ *   Private Helpers
+ * ========================================================================== */
 
-void Navigator_Init(void)
+/**
+ * @brief  Normalize angle to [-pi, +pi].
+ * @param  angle  Input angle in radians.
+ * @return float  Normalized angle.
+ */
+static float NormalizeAngle(float angle)
+{
+    while (angle > M_PI)  
+        angle -= M_2PI;
+    while (angle < -M_PI) 
+        angle += M_2PI;
+    return angle;
+}
+
+/* ==========================================================================
+ *   Public Functions
+ * ========================================================================== */
+
+/**
+ * @brief  Initialize navigator state machine.
+ * @note   Call once after FloodFill_Init() and Motion_Init().
+ */
+void Navigator_Init()
 {
     nav_state = NAV_PLANNING;
-    last_action = FLOOD_STOP;
+    last_action = FLOODFILL_STOP;
     target_heading_rad = 0.0f;
     drive_start_x_mm = 0.0f;
     drive_start_y_mm = 0.0f;
     pause_tick_count = 0;
 }
 
+/**
+ * @brief  Run one state machine step.
+ * @note   Call exactly once per 1 kHz tick.
+ */
 void Navigator_Update(void)
 {
-    switch (nav_state)
+    switch(nav_state)
     {
-        case NAV_PLANNING:
+        /* ==============================================================
+         *  NAV_PLANNING
+         * ============================================================== */
+        case (NAV_PLANNING):
             last_action = FloodFill_Plan();
 
-            switch (last_action)
+            switch(last_action)
             {
-                case FLOOD_STOP:
+                case (FLOODFILL_STOP):
                     Motion_Stop();
                     nav_state = NAV_FINISHED;
                     break;
 
-                case FLOOD_FORWARD:
+                case (FLOODFILL_FORWARD):
                     drive_start_x_mm = Odometry_GetX_mm();
                     drive_start_y_mm = Odometry_GetY_mm();
-                    Motion_MoveForward(MOVE_SPEED);
+                    Motion_SetMoveForwardSpeed(MOVE_SPEED);
                     nav_state = NAV_DRIVING;
                     break;
+                
+                case (FLOODFILL_TURN_LEFT):
+                    target_heading_rad = Odometry_GetHeading_rad() + (M_PI_DIV_2);
+                    Motion_SetTurnLeftSpeed(TURN_SPEED);
+                    nav_state = NAV_TURNING;
+                    break;
+                
+                case (FLOODFILL_TURN_RIGHT):
+                    target_heading_rad = Odometry_GetHeading_rad() + (M_PI_DIV_2);
+                    Motion_SetTurnRightSpeed(TURN_SPEED);
+                    nav_state = NAV_TURNING;
+                    break;
 
-                case FLOOD_LEFT:
-                    target_heading_rad = Odometry_GetHeading_rad() + (M_PI / 2.0f);
+                case FLOODFILL_TURN_AROUND:
+                    target_heading_rad = M_PI;
                     Motion_TurnLeft(TURN_SPEED);
                     nav_state = NAV_TURNING;
                     break;
-
-                case FLOOD_RIGHT:
-                    target_heading_rad = Odometry_GetHeading_rad() - (M_PI / 2.0f);
-                    Motion_TurnRight(TURN_SPEED);
-                    nav_state = NAV_TURNING;
-                    break;
-
-                case FLOOD_UTURN:
-                    target_heading_rad = Odometry_GetHeading_rad() + M_PI;
-                    Motion_TurnLeft(TURN_SPEED);
-                    nav_state = NAV_TURNING;
-                    break;
             }
             break;
 
-        case NAV_TURNING:
-        {
-            float error = NormalizeAngle(target_heading_rad - Odometry_GetHeading_rad());
-            if (fabsf(error) < TURN_TOLERANCE_RAD)
-            {
-                drive_start_x_mm = Odometry_GetX_mm();
-                drive_start_y_mm = Odometry_GetY_mm();
-                Motion_MoveForward(MOVE_SPEED);
-                nav_state = NAV_DRIVING;
-            }
-            break;
-        }
 
-        case NAV_DRIVING:
-        {
-            float dx = Odometry_GetX_mm() - drive_start_x_mm;
-            float dy = Odometry_GetY_mm() - drive_start_y_mm;
-            float traveled = sqrtf((dx * dx) + (dy * dy));
-
-            if (traveled >= (CELL_SIZE_MM - DIST_TOLERANCE_MM))
-            {
-                Motion_Stop();
-                pause_tick_count = 0;
-                nav_state = NAV_PAUSED;
-            }
-            break;
-        }
-
-        case NAV_PAUSED:
-            if (++pause_tick_count >= PAUSE_TICKS)
-            {
-                FloodFill_ReportDone(last_action);
-                nav_state = NAV_PLANNING;
-            }
-            break;
-
-        case NAV_FINISHED:
         default:
             break;
     }
-}
-
-static float NormalizeAngle(float angle)
-{
-    while (angle > M_PI)  
-        angle -= (2.0f * M_PI);
-    while (angle < -M_PI) 
-        angle += (2.0f * M_PI);
-    return angle;
 }

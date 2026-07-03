@@ -43,7 +43,7 @@
  *   Module Data
  * ========================================================================== */
 
-static IR_SensorData ir_data;
+static ir_sensordata_t ir_data;
 
 /* ==========================================================================
  *   Calibration Data (measured and hardcoded)
@@ -189,7 +189,7 @@ void IR_SampleAll(void)
  * @brief  Get pointer to the latest IR sensor data structure.
  * @return const IR_SensorData*  Pointer to internal ir_data.
  */
-const IR_SensorData* IR_GetData(void)
+const ir_sensordata_t* IR_GetData(void)
 {
     return &ir_data;
 }
@@ -199,7 +199,7 @@ const IR_SensorData* IR_GetData(void)
  * @param  ch  Sensor channel to read.
  * @return uint16_t  Raw 12-bit ADC value, right-aligned.
  */
-uint16_t IR_GetRaw(IR_Channel ch)
+uint16_t IR_GetRaw(ir_channel_t ch)
 {
     return ir_data.raw[ch];
 }
@@ -209,7 +209,7 @@ uint16_t IR_GetRaw(IR_Channel ch)
  * @param  ch  Sensor channel to read.
  * @return uint16_t  Reflected IR intensity (0 if raw <= ambient).
  */
-uint16_t IR_GetReflected(IR_Channel ch)
+uint16_t IR_GetReflected(ir_channel_t ch)
 {
     return ir_data.reflected[ch];
 }
@@ -220,7 +220,7 @@ uint16_t IR_GetReflected(IR_Channel ch)
  * @param  threshold  Minimum reflected value to count as wall.
  * @return bool  true if reflected value >= threshold.
  */
-bool IR_IsWallDetected(IR_Channel ch, uint16_t threshold)
+bool IR_IsWallDetected(ir_channel_t ch, uint16_t threshold)
 {
     return (ir_data.reflected[ch] >= threshold);
 }
@@ -230,7 +230,7 @@ bool IR_IsWallDetected(IR_Channel ch, uint16_t threshold)
  * @param  ch  Sensor channel.
  * @return uint16_t  Distance in mm, or IR_DIST_NO_WALL if none.
  */
-uint16_t IR_GetDistanceMm(IR_Channel ch)
+uint16_t IR_GetDistanceMm(ir_channel_t ch)
 {
     if (ch >= IR_COUNT) 
     {
@@ -244,7 +244,7 @@ uint16_t IR_GetDistanceMm(IR_Channel ch)
  * @param  ch  Sensor channel.
  * @return bool  true if wall reliably detected.
  */
-bool IR_IsWallPresent(IR_Channel ch)
+bool IR_IsWallPresent(ir_channel_t ch)
 {
     if (ch >= IR_COUNT) 
     {

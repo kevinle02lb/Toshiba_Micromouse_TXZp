@@ -6,7 +6,7 @@
  *
  * @details
  * 
- *   Formula:  output (MV) = (Kp * error) + (Ki * integral) + (Kd * derivivative)
+ *   Formula:  output (MV) = (kp * error) + (ki * integral) + (kd * derivivative)
  *   MV = manipulated variable
  * 
  *   error = e(t) = SP - PV
@@ -29,9 +29,9 @@
 
 /**
  * @brief  Create and initialize a PID controller with default gains
- * @param  pid  Pointer to PID_t structure
+ * @param  pid  Pointer to pid_t structure
  */
-void PID_Create(PID_t *pid)
+void PID_Create(pid_t *pid)
 {
     PID_Init(pid,
              PID_KP,
@@ -45,20 +45,20 @@ void PID_Create(PID_t *pid)
 
 /**
  * @brief  Initialize a PID controller with gains and output limits
- * @param  pid      Pointer to PID_t structure
- * @param  Kp       Proportional gain
- * @param  Ki       Integral gain
- * @param  Kd       Derivative gain
+ * @param  pid      Pointer to pid_t structure
+ * @param  kp       Proportional gain
+ * @param  ki       Integral gain
+ * @param  kd       Derivative gain
  * @param  dt       Sample time in seconds (should be 0.001f for 1 kHz)
  * @param  out_min  Minimum output clamp (e.g., -100.0f)
  * @param  out_max  Maximum output clamp (e.g., 100.0f)
  * @note  dt = 0.001f because the control loop runs at 1 kHz
  */
-void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min, float out_max)
+void PID_Init(pid_t *pid, float kp, float ki, float kd, float dt, float out_min, float out_max)
 {
-    pid->Kp = Kp;
-    pid->Ki = Ki;
-    pid->Kd = Kd;
+    pid->kp = kp;
+    pid->ki = ki;
+    pid->kd = kd;
     pid->dt = dt;
     pid->out_min = out_min;
     pid->out_max = out_max;
@@ -75,10 +75,10 @@ void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min,
 
 /**
  * @brief  Reset the PID controller state
- * @param  pid  Pointer to PID_t structure
+ * @param  pid  Pointer to pid_t structure
  * @note  Resets integral, deriviative, and previous error to zero
  */
-void PID_Reset(PID_t *pid)
+void PID_Reset(pid_t *pid)
 {
     pid->integral = 0.0f;
     pid->derivative = 0.0f;
@@ -92,21 +92,21 @@ void PID_Reset(PID_t *pid)
  * @param  pid  
  * @note  
  */
-float PID_Update(PID_t *pid, float error)
+float PID_Update(pid_t *pid, float error)
 {
     float proportional_term, integral_term, derivative_term, output;
 
     /* [1] Proportional Term */
-    proportional_term = pid->Kp * error;
+    proportional_term = pid->kp * error;
 
     /* [2] Integral Term */
     pid->integral += error * pid->dt;
 
-    /* Integral clamping (anti-windup) - only if Ki is non-zero */
-    if (pid->Ki != 0.0f) 
+    /* Integral clamping (anti-windup) - only if ki is non-zero */
+    if (pid->ki != 0.0f) 
     {
-        float max_integral = pid->out_max / pid->Ki;
-        float min_integral = pid->out_min / pid->Ki;
+        float max_integral = pid->out_max / pid->ki;
+        float min_integral = pid->out_min / pid->ki;
         if (pid->integral > max_integral) 
         {
             pid->integral = max_integral;
@@ -117,11 +117,11 @@ float PID_Update(PID_t *pid, float error)
         }
     }
     
-    integral_term = pid->Ki * pid->integral;
+    integral_term = pid->ki * pid->integral;
 
     /* [3] Derivative Term */
     pid->derivative = (error - pid->prev_error) / pid->dt;
-    derivative_term = pid->Kd * pid->derivative;
+    derivative_term = pid->ki * pid->derivative;
     
     /* [4] Store current error for next cycle */
     pid->prev_error = error;

@@ -30,7 +30,7 @@
 
 #include "Odometry.h"
 
-Odometry_t odo;
+odometry_t odo;
 
 /* ==========================================================================
  *   Initialization

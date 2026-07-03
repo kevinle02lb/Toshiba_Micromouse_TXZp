@@ -38,8 +38,8 @@
 #define PERIOD_L    ((uint16_t)T32A_CH0_PERIOD)
 #define PERIOD_R    ((uint16_t)T32A_CH3_PERIOD)
 
-static direction_t motor_left_dir  = STOP;
-static direction_t motor_right_dir = STOP;
+static motor_dir_t motor_left_dir  = STOP;
+static motor_dir_t motor_right_dir = STOP;
 
 /* ==========================================================================
  *   Private helper
@@ -103,7 +103,7 @@ void Motor_Stop(void)
  *   Left motor
  * ========================================================================== */
 
-void Motor_SetLeft(direction_t dir, uint8_t speed)
+void Motor_SetLeft(motor_dir_t dir, uint8_t speed)
 {
     uint16_t duty = Speed_ToDuty(speed, PERIOD_L);
 
@@ -168,7 +168,7 @@ void Motor_SetLeft(direction_t dir, uint8_t speed)
  *   Right motor
  * ========================================================================== */
 
-void Motor_SetRight(direction_t dir, uint8_t speed)
+void Motor_SetRight(motor_dir_t dir, uint8_t speed)
 {
     uint16_t duty = Speed_ToDuty(speed, PERIOD_R);
 
@@ -227,7 +227,7 @@ void Motor_SetRight(direction_t dir, uint8_t speed)
  *   Motor set
  * ========================================================================== */
 
-void Motor_Set(motor_t motor, direction_t dir, uint8_t speed)
+void Motor_Set(motor_t motor, motor_dir_t dir, uint8_t speed)
 {
     switch (motor)
     {

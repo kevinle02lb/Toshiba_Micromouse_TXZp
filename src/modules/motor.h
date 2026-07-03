@@ -39,14 +39,14 @@ typedef enum
     REVERSE,       /*!< Reverse  (datasheet forward: IN1=PWM, IN2=LOW) */
     BRAKE,         /*!< Active brake   (IN1=HIGH, IN2=HIGH, motor shorted) */
     STOP           /*!< Stop/standby   (IN1=LOW,  IN2=LOW,  Hi-Z output) */
-} direction_t;
+} motor_dir_t;
 
 void Motor_Init(void);
 void Motor_Start(void);
 void Motor_Stop(void);
 
-void Motor_Set(motor_t motor, direction_t dir, uint8_t speed);
-void Motor_SetLeft(direction_t dir, uint8_t speed);
-void Motor_SetRight(direction_t dir, uint8_t speed);
+void Motor_Set(motor_t motor, motor_dir_t dir, uint8_t speed);
+void Motor_SetLeft(motor_dir_t dir, uint8_t speed);
+void Motor_SetRight(motor_dir_t dir, uint8_t speed);
 
 #endif /* MOTOR_H */

@@ -80,7 +80,7 @@ typedef struct
     float right_dist_mm;                    /*!< Total distance traveled by right wheel */
     int32_t prev_left_pos;                  /*!< Previous left encoder position */
     int32_t prev_right_pos;                 /*!< Previous right encoder position */
-} Odometry_t;
+} odometry_t;
 
 
 /* ==========================================================================

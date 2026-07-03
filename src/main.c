@@ -81,6 +81,7 @@
 #include "modules/Odometry.h"
 #include "modules/Motion.h"
 #include "modules/FloodFill.h"
+#include "modules/Navigator.h"
 
 
 void ModuleInit(void);
@@ -100,8 +101,9 @@ int main()
 		{
             /* control Logic to be implemented */
 			Encoder_Update();
-			Odometry_Update();
-			Motion_Update();
+            Odometry_Update();
+            Motion_Update();
+            Navigator_Update();
         }
 	}
 
@@ -116,10 +118,12 @@ int main()
  */
 void ModuleInit()
 {
-	Timebase_Init();
-	IR_Init();
-	Motion_Init();
-	FloodFill_Init();
+	Encoder_Init();
+    Odometry_Init();
+    Motion_Init();
+    FloodFill_Init();
+    Navigator_Init();
+    Timebase_Init();
 }
 
 

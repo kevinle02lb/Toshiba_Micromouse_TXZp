@@ -38,7 +38,7 @@ typedef struct
     int32_t delta;              /*!< raw - prev (counts per tick) */
     int32_t position;           /*!< Accumulated signed position */
     int32_t speed_filtered;     /*!< IIR-filtered speed (counts per second) */
-} EncoderState_t;
+} encoder_t;
 
 /* ==========================================================================
  *   Configuration

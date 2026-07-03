@@ -57,7 +57,7 @@ typedef enum
     IR_RIGHT     = 2,   /*!< AINC01 @ PJ1 — Right receiver */
     IR_FAR_RIGHT = 3,   /*!< AINC00 @ PJ0 — Far Right receiver */
     IR_COUNT     = 4    /* Number of IR Sensor Pairs */
-} IR_Channel;
+} ir_channel_t;
 
 
 /* ==========================================================================
@@ -75,7 +75,7 @@ typedef struct
     uint16_t filtered[IR_COUNT];    /*!< IIR-filtered reflected value */
     uint16_t distance_mm[IR_COUNT]; /*!< Distance for Each IR Sensor*/
     bool     wallDetected[IR_COUNT];
-} IR_SensorData;
+} ir_sensordata_t;
 
 
 /* ==========================================================================
@@ -136,24 +136,24 @@ void IR_Init(void);
 void IR_SampleAll(void);
 
 /* Data access */
-const IR_SensorData* IR_GetData(void);
-uint16_t IR_GetRaw(IR_Channel ch);
-uint16_t IR_GetReflected(IR_Channel ch);
-bool IR_IsWallDetected(IR_Channel ch, uint16_t threshold);
+const ir_sensordata_t* IR_GetData(void);
+uint16_t IR_GetRaw(ir_channel_t ch);
+uint16_t IR_GetReflected(ir_channel_t ch);
+bool IR_IsWallDetected(ir_channel_t ch, uint16_t threshold);
 
 /**
  * @brief  Get latest distance for a channel (mm).
  * @param  ch  Sensor channel.
  * @return uint16_t  Distance in mm, or IR_DIST_NO_WALL if none.
  */
-uint16_t IR_GetDistanceMm(IR_Channel ch);
+uint16_t IR_GetDistanceMm(ir_channel_t ch);
 
 /**
  * @brief  Check if wall is present with hysteresis.
  * @param  ch  Sensor channel.
  * @return bool  true if wall reliably detected.
  */
-bool IR_IsWallPresent(IR_Channel ch);
+bool IR_IsWallPresent(ir_channel_t ch);
 
 /* Emitter control */
 void IR_AllEmittersOff(void);

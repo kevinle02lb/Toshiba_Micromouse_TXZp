@@ -19,16 +19,16 @@
 
 typedef struct 
 {
-    float Kp;           /*!< Proportional gain */
-    float Ki;           /*!< Integral gain */
-    float Kd;           /*!< Derivative gain */
+    float kp;           /*!< Proportional gain */
+    float ki;           /*!< Integral gain */
+    float kd;           /*!< Derivative gain */
     float integral;     /*!< Accumulated integral term */
     float derivative;   /*!< Derivative of Error */
     float prev_error;   /*!< Previous error (for derivative) */
     float dt;           /*!< Sample time in seconds (0.001f) */
     float out_min;      /*!< Minimum output clamp (e.g., -100.0f) */
     float out_max;      /*!< Maximum output clamp (e.g., 100.0f) */
-} PID_t;
+} pid_t;
 
 /* ==========================================================================
  *   PID Default Gains
@@ -45,10 +45,10 @@ typedef struct
 /* ==========================================================================
  *   Function Prototypes
  * ========================================================================== */
-void PID_Create(PID_t *pid);
-void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float out_min, float out_max);
-void PID_Reset(PID_t *pid);
-float PID_Update(PID_t *pid, float error);
+void PID_Create(pid_t *pid);
+void PID_Init(pid_t *pid, float Kp, float Ki, float Kd, float dt, float out_min, float out_max);
+void PID_Reset(pid_t *pid);
+float PID_Update(pid_t *pid, float error);
 float CalculateError(float SP, float PV);
 
 

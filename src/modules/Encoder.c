@@ -54,7 +54,7 @@
  *   Private Data
  * ========================================================================== */
 
-static EncoderState_t enc_state[2];
+static encoder_t enc_state[2];
 
 /* ==========================================================================
  *   Private Helpers
@@ -94,7 +94,7 @@ void Encoder_Init(void)
     ENC32A_Init();
 
     /* Clear all state */
-    for (int i = 0; i < 2; i++)
+    for (uint8_t i = 0; i < 2; i++)
     {
         enc_state[i].raw_count      = 0;
         enc_state[i].prev_count     = 0;

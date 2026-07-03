@@ -26,8 +26,8 @@
  *   Private Data
  * ========================================================================== */
 
-static PID_t pid_left;
-static PID_t pid_right;
+static pid_t pid_left;
+static pid_t pid_right;
 
 static float target_left = 0.0f;
 static float target_right = 0.0f;
@@ -45,7 +45,7 @@ static float target_right = 0.0f;
  */
 static void Motion_ApplyOutput(motor_t motor, float output)
 {
-    direction_t dir;
+    motor_dir_t dir;
     uint8_t duty;
 
     if (output > MOTION_DEADZONE)

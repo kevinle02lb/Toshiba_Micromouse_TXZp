@@ -13,10 +13,9 @@
 #ifndef NAVIGATOR_H
 #define NAVIGATOR_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "FloodFill.h"   /* for floodfill_action_t */
 
 void Navigator_Init(void);
-void Navigator_Update(void);    /* Call at 1 kHz */
+void Navigator_Update(void);
 
 #endif /* NAVIGATOR_H */
