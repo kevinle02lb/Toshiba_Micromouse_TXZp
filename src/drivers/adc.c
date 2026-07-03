@@ -11,6 +11,9 @@
  *   Pin Assignments:
  *   - Unit A: PL0 (AINA16), PL1 (AINA15) — Left IR sensors
  *   - Unit C: PJ0 (AINC00), PJ1 (AINC01) — Right IR sensors
+ *  
+ *   - PL0 = Far Left IR, PL1 = Left IR (Left ADC)
+ *   - PJ1 = Right IR, PJ0 = Far Right IR (Right ADC)
  *
  *   Reference Documents (Toshiba):
  *   - Product Info:  https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf?did=70854
@@ -36,6 +39,7 @@
 #include "adc.h"
 #include "systick.h"
 #include "dma.h"
+#include "gpio.h"
 
 /* ==========================================================================
  *   INTERRUPT NOTES (Read this first)
@@ -105,6 +109,9 @@ void ADC_Init(void)
  */
 void AINA_Init(void)
 {
+    /* GPIO ADC inputs (Unit A) */
+    PORT_L_Init();      
+
     /* [1] Enable ADC Unit A peripheral clock */
     TSB_CG->FSYSMENB |= AINA_CG_FSYSMENB_IPMENB02;
 
@@ -154,6 +161,9 @@ void AINA_Init(void)
  */
 void AINC_Init(void)
 {
+    /* GPIO ADC inputs (Unit C) */
+    PORT_J_Init();  
+
     /* [1] Enable ADC Unit C peripheral clock */
     TSB_CG->FSYSMENB |= AINC_CG_FSYSMENB_IPMENB04;
 

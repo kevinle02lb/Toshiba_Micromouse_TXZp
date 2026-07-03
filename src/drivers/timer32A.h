@@ -23,16 +23,15 @@
 extern volatile bool T32A01AC_IRQ_Fire;  
 
 /* ==========================================================================
- *   User Config
+ *   Config
  * ========================================================================== */
 #define T32A_CH0_PERIOD     2000    /*!< 80 MHz / 1:1 / 2000 = 40 kHz PWM */
 #define T32A_CH3_PERIOD     2000    /*!< Same for right motor */
 #define T32A_CH1_1KHZ       80000   /*!< 80Mhz / 1:1 / 80000 = 1kHz */
 
-#define T32A_MODE_SEL       0       /*!< 0 = 16-bit, 1 = 32-bit */
-#define T32A1_MODE_SEL      1       /*!< 0 = 16-bit, 1 = 32-bit */
-#define T32A_PRSCL_SEL      0       /*!< 0 = 1:1, see RM for others */
-
+#define T32A_MODE_16BIT     0
+#define T32A_MODE_32BIT     1
+#define T32A_PRSCL_1TO1     0
 
 /* ==========================================================================
  *   Clock Gating
@@ -45,19 +44,21 @@ extern volatile bool T32A01AC_IRQ_Fire;
  *   Mode / Run Registers
  * ========================================================================== */
 #define T32A_MODE_MASK          ((uint32_t)0x03)          /*!< Mode bits [1:0] */
-#define T32A_MODE32             ((uint32_t)T32A_MODE_SEL) /*!< 16/32-bit select */
 #define T32A_RUNx_RUNFLGx_MASK  ((uint32_t)0x01 << 4U)    /*!< RUN flag (read-only) */
 #define T32A_RUNx_MASK          ((uint32_t)0x01 << 0U)    /*!< RUN control */
+
+#define T32A_RUNx_SFTSTAx       ((uint32_t)0x01 << 1U)    /*!< Starts the operation by program. */
+#define T32A_RUNx_SFTSTPx       ((uint32_t)0x01 << 2U)    /*!< Stops the operation by program. */
 
 /* ==========================================================================
  *   Counter Control (CRA/CRB/CRC)
  * ========================================================================== */
 #define T32A_CRx_PRSCLC_MASK    ((uint32_t)0x07 << 28U)   /*!< Prescaler mask */
-#define T32A0_CRA_PRSCLA        ((uint32_t)T32A_PRSCL_SEL << 28U)
-#define T32A0_CRB_PRSCLB        ((uint32_t)T32A_PRSCL_SEL << 28U)
-#define T32A3_CRA_PRSCLA        ((uint32_t)T32A_PRSCL_SEL << 28U)
-#define T32A3_CRB_PRSCLB        ((uint32_t)T32A_PRSCL_SEL << 28U)
-#define T32A1_CRC_PRSCLC        ((uint32_t)T32A_PRSCL_SEL << 28U)
+#define T32A0_CRA_PRSCLA        ((uint32_t)T32A_PRSCL_1TO1 << 28U)
+#define T32A0_CRB_PRSCLB        ((uint32_t)T32A_PRSCL_1TO1 << 28U)
+#define T32A3_CRA_PRSCLA        ((uint32_t)T32A_PRSCL_1TO1 << 28U)
+#define T32A3_CRB_PRSCLB        ((uint32_t)T32A_PRSCL_1TO1 << 28U)
+#define T32A1_CRC_PRSCLC        ((uint32_t)T32A_PRSCL_1TO1 << 28U)
 
 #define T32A_CRx_STARTx_MASK    ((uint32_t)0x07 << 0U)    /*!< Sets the counter start condition mask*/
 #define T32A_CRx_STOPx_MASK     ((uint32_t)0x07 << 4U)    /*!< Sets the counter stop condition mask*/

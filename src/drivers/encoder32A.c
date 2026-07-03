@@ -23,6 +23,7 @@
  */
 
 #include "encoder32A.h"
+#include "gpio.h"
 
 /* ==========================================================================
  *   IMPORTANT NOTE
@@ -35,6 +36,10 @@
  *   Initialization
  * ========================================================================== */
 
+/**
+ * @brief  Initialise all encoder modules
+ * @note   Separately inits each module
+ */
 void ENC32A_Init(void)
 {
     ENC0_Init();   /* Left motor encoder */
@@ -43,6 +48,8 @@ void ENC32A_Init(void)
 
 void ENC0_Init(void)
 {
+    PORT_N_Init();
+    
     /* [1] Enable peripheral clock */
     TSB_CG->FSYSMENB |= ENC0_CG_FSYSMENB_IPMENB06;
 
@@ -51,7 +58,10 @@ void ENC0_Init(void)
 
     /* [3] Operation mode: Encoder (000), no Z, no Phase 3 */
     TSB_EN0->TNCR &= ~(TNCR_MODE_MASK | TNCR_P3EN_MASK | TNCR_ZEN_MASK);
-    TSB_EN0->TNCR |= TNCR_ENCLR_MASK;   /* Clear counter */
+    /* Clear counter */
+    TSB_EN0->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN0->TNCR &= ~TNCR_ENCLR_MASK;
+    
 
     /* [4] Input circuit: 10 MHz sample clock, 400 ns noise cancellation */
     TSB_EN0->CLKCR = CLKCR_SPLCKS_8DIV;                          /* Fsys/8 = 10 MHz */
@@ -73,6 +83,8 @@ void ENC0_Init(void)
 
 void ENC2_Init(void)
 {
+    PORT_D_Init();
+
     /* [1] Enable peripheral clock */
     TSB_CG->FSYSMENB |= ENC2_CG_FSYSMENB_IPMENB08;
 
@@ -81,7 +93,10 @@ void ENC2_Init(void)
 
     /* [3] Operation mode: Encoder, no Z, no Phase 3 */
     TSB_EN2->TNCR &= ~(TNCR_MODE_MASK | TNCR_P3EN_MASK | TNCR_ZEN_MASK);
+    /* Clear counter */
     TSB_EN2->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN2->TNCR &= ~TNCR_ENCLR_MASK;
+    
 
     /* [4] Input circuit: 10 MHz sample, 400 ns noise cancellation */
     TSB_EN2->CLKCR = CLKCR_SPLCKS_8DIV;
@@ -114,6 +129,7 @@ void ENC0_ClearCNT(void)
 {
     ENC0_Stop();
     TSB_EN0->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN0->TNCR &= ~TNCR_ENCLR_MASK;
     ENC0_Start();
 }
 
@@ -121,6 +137,7 @@ void ENC2_ClearCNT(void)
 {
     ENC2_Stop();
     TSB_EN2->TNCR |= TNCR_ENCLR_MASK;
+    TSB_EN2->TNCR &= ~TNCR_ENCLR_MASK;
     ENC2_Start();
 }
 
@@ -133,15 +150,8 @@ void ENC2_ClearCNT(void)
  * @return true = CW, false = CCW.
  * @note   Returns 0 when ENRUN = 0.
  */
-bool ENC0_GetStatus(void)
-{
-    return (TSB_EN0->STS & STS_UD_MASK) != 0;
-}
-
-bool ENC2_GetStatus(void)
-{
-    return (TSB_EN2->STS & STS_UD_MASK) != 0;
-}
+bool ENC0_GetStatus(void)     { return (TSB_EN0->STS & STS_UD_MASK) != 0; }
+bool ENC2_GetStatus(void)     { return (TSB_EN2->STS & STS_UD_MASK) != 0; }
 
 int32_t ENC0_ReadCount(void)  { return (int32_t)TSB_EN0->CNT; }
 int32_t ENC2_ReadCount(void)  { return (int32_t)TSB_EN2->CNT; }

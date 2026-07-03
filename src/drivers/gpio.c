@@ -95,6 +95,7 @@ void PORT_G_Init(void)
     /* PG4/PG5 = IR emitters (Right) — regular GPIO outputs */
     PG_FRn_Clear(Px4_MASK | Px5_MASK);
     TSB_PG->CR |= Px4_MASK | Px5_MASK;
+    TSB_PG->DATA = 0;
 }
 
 void PORT_U_Init(void)
@@ -104,6 +105,7 @@ void PORT_U_Init(void)
     /* PU0/PU1 = IR emitters (Left) — regular GPIO outputs */
     PU_FRn_Clear(Px0_MASK | Px1_MASK);
     TSB_PU->CR |= Px0_MASK | Px1_MASK;
+    TSB_PU->DATA = 0;
 }
 
 void PORT_J_Init(void)
@@ -179,4 +181,35 @@ void PU_FRn_Clear(uint32_t pin_mask)
     TSB_PU->FR3 &= ~pin_mask; TSB_PU->FR4 &= ~pin_mask;
     TSB_PU->FR5 &= ~pin_mask; TSB_PU->FR6 &= ~pin_mask;
     TSB_PU->FR7 &= ~pin_mask;
+}
+
+
+/* ==========================================================================
+ *   Port Logic Controls
+ * ========================================================================== */
+void GPIO_G_SetData(uint8_t data)
+{
+    TSB_PG->DATA |= data;
+}
+void GPIO_U_SetData(uint8_t data)
+{
+    TSB_PU->DATA |= data;
+}
+
+void GPIO_G_ClrData(uint8_t data)
+{
+    TSB_PG->DATA &= ~data;
+}
+void GPIO_U_ClrData(uint8_t data)
+{
+    TSB_PU->DATA &= ~data;
+}
+
+void GPIO_G_ToggleData(uint8_t data)
+{
+    TSB_PG->DATA ^= data;
+}
+void GPIO_U_ToggleData(uint8_t data)
+{
+    TSB_PU->DATA ^= data;
 }

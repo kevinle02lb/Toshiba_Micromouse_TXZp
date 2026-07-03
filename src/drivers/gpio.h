@@ -19,6 +19,8 @@
 #include "TMPM4KyA.h"
 #include <stdint.h>
 
+
+
 /* ==========================================================================
  *   Pin Masks
  * ========================================================================== */
@@ -60,5 +62,12 @@ void PD_FRn_Clear(uint32_t pin_mask);
 void PG_FRn_Clear(uint32_t pin_mask);
 void PN_FRn_Clear(uint32_t pin_mask);
 void PU_FRn_Clear(uint32_t pin_mask);
+
+void GPIO_G_SetData(uint8_t data);
+void GPIO_U_SetData(uint8_t data);
+void GPIO_G_ClrData(uint8_t data);
+void GPIO_U_ClrData(uint8_t data);
+void GPIO_G_ToggleData(uint8_t data);
+void GPIO_U_ToggleData(uint8_t data);
 
 #endif /* GPIO_H */
