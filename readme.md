@@ -120,7 +120,7 @@ TOSHIBAMICRO/
 | **Motors** | TB67H450AFNG + Pololu #5211 N20 30:1 | T32A PPG PWM @ 40 kHz |
 | **Encoders** | A-ENC32 (on-chip) | Quadrature, 12 CPR × 29.89 ≈ 360/rev |
 | **IR Sensors** | IR LED + phototransistor ×4 | ADC-I + DMA |
-| **Debug** | CMSIS-DAP + Level Shifter | SWD |
+| **Debug** | CMSIS-DAP + Level Shifter (TXB0104) | SWD |
 
 ### Pin Map
 
