@@ -103,7 +103,7 @@ void ModuleInit(void);
 
 
 
-int main()
+int main(void)
 {
 	SystemInit();								/* Initialize system clock and peripherals */
 	ModuleInit();

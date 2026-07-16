@@ -92,11 +92,11 @@ void Motor_Start(void)
 
 void Motor_Stop(void)
 {
+    Motor_SetLeft(STOP, 0U);
+    Motor_SetRight(STOP, 0U);
+
     T32A0_Stop();
     T32A3_Stop();
-
-    motor_left_dir  = STOP;
-    motor_right_dir = STOP;
 }
 
 /* ==========================================================================
