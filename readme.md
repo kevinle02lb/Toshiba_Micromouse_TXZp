@@ -14,7 +14,31 @@
 
 Micromouse is a classic robotics challenge: an autonomous robot explores a 16×16 grid maze, discovers the walls, solves for the center, and then runs a timed pass along the best path it found.
 
-This is a build on Toshiba's **TMPM4KNF10AFG** (ARM Cortex-M4). Every peripheral driver is written by hand from the Toshiba reference manuals — no vendor HAL — so each register access is understood rather than abstracted away. Motors, quadrature encoders, IR wall sensing, and the maze solver are all coordinated by a single **1 kHz control loop**.
+## Platform: Toshiba TMPM4KNF10AFG
+
+The TMPM4KNF10AFG is an ARM Cortex-M4F microcontroller from Toshiba's M4K
+family, a line engineered for motor and inverter control. It pairs the
+Cortex-M4 core — with its single-precision FPU and DSP instructions for
+real-time control math — with Toshiba's motor-control peripheral set:
+programmable timers capable of driving three-phase inverter bridges with
+complementary PWM, hardware dead-time insertion, and fault-triggered
+emergency shutdown, alongside on-chip quadrature encoder decoders (A-ENC32)
+and ADC units with hardware-synchronized triggering for inline current and
+position sensing.
+
+These are the building blocks of field-oriented control (FOC), which is why
+the family is used across industrial and consumer motion systems: brushless
+(BLDC) and permanent-magnet synchronous (PMSM) motor drives in appliances,
+pumps, fans, HVAC compressors, power tools, and factory automation, where
+efficient closed-loop control of a three-phase motor is the core workload.
+
+**In this project**, the same silicon drives a smaller-scale motion problem:
+two brushed DC gear-motors through H-bridges under a 1 kHz closed-loop PID,
+with the on-chip A-ENC32 decoders handling wheel feedback and the
+trigger-driven ADC path handling IR wall sensing. The peripheral set built
+for industrial three-phase drives maps cleanly onto a micromouse — encoder
+counting and motor PWM run as dedicated hardware, leaving the core free for
+navigation and maze-solving.
 
 **Highlights**
 
@@ -65,14 +89,15 @@ This is a build on Toshiba's **TMPM4KNF10AFG** (ARM Cortex-M4). Every peripheral
 ---
  
 ## Mechanical Design
- 
+
 The chassis was designed in Fusion 360. A render of the full assembly:
- 
+
 <p align="center">
   <img src="docs/assets/fusion_robot.png" width="480" alt="Fusion 360 Robot Render">
   <br>
   <em>Fusion 360 render of the micromouse assembly with Chassis</em>
 </p>
+
 ---
  
 ## Documentation
