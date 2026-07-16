@@ -63,7 +63,18 @@ This is a build on Toshiba's **TMPM4KNF10AFG** (ARM Cortex-M4). Every peripheral
 </p>
 
 ---
-
+ 
+## Mechanical Design
+ 
+The chassis was designed in Fusion 360. A render of the full assembly:
+ 
+<p align="center">
+  <img src="docs/assets/fusion_robot.png" width="480" alt="Fusion 360 Robot Render">
+  <br>
+  <em>Fusion 360 render of the micromouse assembly with Chassis</em>
+</p>
+---
+ 
 ## Documentation
 
 The full technical breakdown — architecture, control-loop stages, pin map, timer configuration, and module status — lives in the source tree:
