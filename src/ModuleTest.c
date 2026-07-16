@@ -180,6 +180,13 @@
 
 #endif /* MOTOR_TEST */
 
+/* ==========================================================================
+ *   IR Test
+ * ========================================================================== */
+#ifdef IR_TEST
+
+
+#endif /* IR_TEST */
 
 int main(void)
 {   
@@ -193,6 +200,9 @@ int main(void)
         MotorTest_Run();
     #endif
 
+    #ifdef IR_TEST
+
+    #endif
 
     while(1)
     {
