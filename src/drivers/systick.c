@@ -35,18 +35,19 @@ void SysTick_us(uint32_t val)
     if (val == 0U) { return; }
 
     /* Clamp to max LOAD (0xFFFFFF) */
-    if (val > (SysTick_LOAD_RELOAD_Msk / 160U)) {
+    if (val > (SysTick_LOAD_RELOAD_Msk / 160U)) 
+    {
         val = SysTick_LOAD_RELOAD_Msk / 160U;
     }
 
     SysTick->LOAD = (uint32_t)((val * 160U) - 1U);
-    SysTick->VAL  = 0;                                          /* Clear current value */
-    SysTick->CTRL = (SysTick_CTRL_CLKSOURCE_Msk |                /* Processor clock */
+    SysTick->VAL  = 0;                                            /* Clear current value */
+    SysTick->CTRL = (SysTick_CTRL_CLKSOURCE_Msk |                 /* Processor clock */
                      SysTick_CTRL_ENABLE_Msk);                    /* Start counter */
 
-    while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)) { ; }  /* Poll until done */
+    while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)) { ; }   /* Poll until done */
 
-    SysTick->CTRL = 0;                                           /* Disable for next call */
+    SysTick->CTRL = 0;                                            /* Disable for next call */
 }
 
 /**

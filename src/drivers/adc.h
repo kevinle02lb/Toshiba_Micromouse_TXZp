@@ -1,22 +1,37 @@
 /**
- * @file        adc.h
- * @brief       ADC-I driver for TMPM4Ky RISC microcontrollers.
+ * @file        adc.c
+ * @brief       ADC-I driver implementation for TMPM4Ky RISC microcontrollers.
  * @version     V1.0.0
  * @date        29-05-2026
  *
  * @details
- *   Provides initialization and control functions for the ADC-I peripheral.
- *   Target: Single conversion mode with DMA burst transfer.
+ *   Configures ADC Units A and C for single-conversion mode with DMA.
+ *   ADCLK = 160 MHz raw; SCLK = 40 MHz after /4 prescaler.
  *
- *   ADC Unit A (AINA15 @ PL1, AINA16 @ PL0) — Left IR sensors
- *   ADC Unit C (AINC00 @ PJ0, AINC01 @ PJ1) — Right IR sensors
+ *   Pin Assignments:
+ *   - Unit A: PL0 (AINA16), PL1 (AINA15) — Left IR sensors
+ *   - Unit C: PJ0 (AINC00), PJ1 (AINC01) — Right IR sensors
+ *  
+ *   - PL0 = Far Left IR, PL1 = Left IR (Left ADC)
+ *   - PJ1 = Right IR, PJ0 = Far Right IR (Right ADC)
  *
- *   Reference:
- *   - Product Info:  https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf?did=70854
- *   - ADC-I RM:     https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf?did=166835
- *   - App Note:     https://toshiba.semicon-storage.com/info/COM_ADC_MON-ANE_application_note_en_20231016.pdf?did=156383&prodName=TMPM4KNF10AFG
+ *   Reference Documents (Toshiba):
+ *   - Product Info:        https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf?did=70854
+ *   - ADC-I RM:            https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf?did=166835
+ *   - I/O Ports RM:        https://toshiba.semicon-storage.com/info/TXZP-PORT-M4K(2)_en_20250620.pdf?did=70850
+ *   - EXCEPT-M4K(2) RM:    https://toshiba.semicon-storage.com/info/TXZP-EXCEPT-M4K(2)_en_20230414.pdf?did=70852
+ *   - App Note:            https://toshiba.semicon-storage.com/info/COM_ADC_MON-ANE_application_note_en_20231016.pdf?did=156383&prodName=TMPM4KNF10AFG
+ * 
+ *   Reference Documents (ARM — NVIC addresses and functions):
+ *   - core_cm4.h    — CMSIS NVIC helper functions (__NVIC_EnableIRQ, etc.)
+ *   - cmsis_gcc.h   — Compiler barriers and core register access
+ *   - startup_TMPM4KNA.s — Vector table with IRQ handler names
  *
  * @note
+ *   NVIC register names (ISER, ICER, IPR) are ARM standard.
+ *   Toshiba manual uses different names (<SETENA>, <CLRENA>, <PRI_n>).
+ *   See EXCEPT-M4K(2) §5.6 for the mapping.
+ *
  *   File structure and Doxygen formatting assisted by AI.
  *
  * Copyright (c) [Kevin Le] 2026

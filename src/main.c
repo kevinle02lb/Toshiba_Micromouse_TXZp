@@ -30,7 +30,7 @@
  *   - MCU:     TMPM4KNF10AFG (ARM Cortex-M4, 5V, 160 MHz)
  *   - Motors:  TB67H450AFNG x2 + Pololu #5211 N20 30:1
  *   - Sensors: IR emitter/receiver pairs x4
- *   - Debug:   External CMSIS-DAP w/ Level Shifter
+ *   - Debug:   External CMSIS-DAP w/ Level Shifter (TXB0104)
  *
  * ___________________________________________________________________________
  * Pin Assignment:
@@ -103,7 +103,7 @@ void ModuleInit(void);
 
 
 
-int main()
+int main(void)
 {
 	SystemInit();								/* Initialize system clock and peripherals */
 	ModuleInit();
