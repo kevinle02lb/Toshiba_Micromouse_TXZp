@@ -16,10 +16,11 @@
  *   - PJ1 = Right IR, PJ0 = Far Right IR (Right ADC)
  *
  *   Reference Documents (Toshiba):
- *   - Product Info:  https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf?did=70854
- *   - ADC-I RM:     https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf?did=166835
+ *   - Product Info:        https://toshiba.semicon-storage.com/info/TXZP-PINFO-M4K(2)_en_20231225.pdf?did=70854
+ *   - ADC-I RM:            https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf?did=166835
+ *   - I/O Ports RM:        https://toshiba.semicon-storage.com/info/TXZP-PORT-M4K(2)_en_20250620.pdf?did=70850
  *   - EXCEPT-M4K(2) RM:    https://toshiba.semicon-storage.com/info/TXZP-EXCEPT-M4K(2)_en_20230414.pdf?did=70852
- *   - App Note:     https://toshiba.semicon-storage.com/info/COM_ADC_MON-ANE_application_note_en_20231016.pdf?did=156383&prodName=TMPM4KNF10AFG
+ *   - App Note:            https://toshiba.semicon-storage.com/info/COM_ADC_MON-ANE_application_note_en_20231016.pdf?did=156383&prodName=TMPM4KNF10AFG
  * 
  *   Reference Documents (ARM — NVIC addresses and functions):
  *   - core_cm4.h    — CMSIS NVIC helper functions (__NVIC_EnableIRQ, etc.)

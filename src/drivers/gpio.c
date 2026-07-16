@@ -49,9 +49,9 @@ void PORT_A_Init(void)
     TSB_CG->FSYSMENA |= CG_PORTA;
 
     /* PA3 = T32A00OUTA, PA4 = T32A00OUTB — PWM outputs */
-    TSB_PA->CR |= Px3_MASK | Px4_MASK;
     PA_FRn_Clear(Px3_MASK | Px4_MASK);
     TSB_PA->FR4 |= Px3_MASK | Px4_MASK;   /* FR4 = T32A00 function */
+    TSB_PA->CR |= Px3_MASK | Px4_MASK;
 }
 
 void PORT_C_Init(void)
@@ -59,9 +59,9 @@ void PORT_C_Init(void)
     TSB_CG->FSYSMENA |= CG_PORTC;
 
     /* PC2 = T32A30OUTA, PC3 = T32A30OUTB — PWM outputs */
-    TSB_PC->CR |= Px2_MASK | Px3_MASK;
     PC_FRn_Clear(Px2_MASK | Px3_MASK);
     TSB_PC->FR5 |= Px2_MASK | Px3_MASK;   /* FR5 = T32A30 function */
+    TSB_PC->CR |= Px2_MASK | Px3_MASK;
 }
 
 void PORT_D_Init(void)
