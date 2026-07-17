@@ -29,18 +29,15 @@ This project implements the entire stack from scratch — custom 4-layer PCB, me
 
 </div>
 
-The TMPM4KNF10AFG is an industrial-grade ARM Cortex-M4F microcontroller from Toshiba's M4K motor-control family. Engineered for **real-time motion systems**, it is deployed across industrial and consumer applications including BLDC/PMSM motor drives, HVAC compressors, power tools, pumps, fans, and factory automation equipment.
+The TMPM4KNF10AFG comes from the **M4K Group of Toshiba's TXZ+™ Family (Advanced Class)** — a line of Cortex-M4F microcontrollers built for real-time motor control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
 
-**Key specs leveraged in this project:**
+| Capability | Role in this build |
+|-----------|--------------------|
+| Cortex-M4F @ 160 MHz + FPU | Navigation, PID, and flood-fill maze solving |
+| On-chip motor & encoder hardware | Wheel feedback and PPG-generated motor PWM |
+| High-speed analog sensing | IR wall detection |
 
-| Feature | Application |
-|---------|-------------|
-| Cortex-M4F + FPU | Real-time maze solving & control algorithms |
-| Hardware QEI (A-ENC32) | Wheel encoder feedback |
-| Advanced Motor Timers | Complementary PWM with dead-time for H-bridge drive |
-| Trigger-synced ADC | IR wall-sensing with hardware timing |
-
-The same silicon powering industrial three-phase motor drives runs a 1 kHz closed-loop PID over two brushed DC gear-motors, with dedicated hardware handling encoder counting and motor PWM so the CPU stays free for navigation and flood-fill maze solving.
+The same silicon built for industrial three-phase drives runs a smaller-scale problem here — a 1 kHz closed-loop PID over two brushed DC gear-motors — with dedicated hardware handling encoder counting and motor PWM so the CPU stays free for navigation and flood-fill maze solving.
 
 ---
 
