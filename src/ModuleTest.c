@@ -187,7 +187,7 @@
  * ========================================================================== */
 #ifdef IR_TEST
 
-    #define IR_TEST_PERIOD_MS   50U   /* stream ~20 Hz — readable, not a firehose */
+    #define IR_TEST_PERIOD_MS   50U   /* stream ~20 Hz */
 
     static void Test_HoldMS(uint32_t ms)
     {
@@ -212,9 +212,8 @@
 
     static void IRTest_Run(void)
     {
-        IR_SampleAll();   /* fresh OFF/ON cycle + ambient cancel + filter */
+        IR_SampleAll();  
 
-        /* filtered reflected values, one line */
         IRTest_PrintChannel("FL", IR_FAR_LEFT);
         IRTest_PrintChannel("L",  IR_LEFT);
         IRTest_PrintChannel("R",  IR_RIGHT);
