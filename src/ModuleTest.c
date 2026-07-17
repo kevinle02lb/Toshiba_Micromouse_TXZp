@@ -16,12 +16,14 @@
 #include "modules/Timebase.h"
 #include "modules/Encoder.h"
 #include "modules/Motor.h"
+#include "modules/IrSensor.h"   
+#include "drivers/uart.h"
 
 /* ==========================================================================
  *   Module Defines
  * ========================================================================== */
-#define MOTOR_TEST
-//#define IR_TEST
+//#define MOTOR_TEST
+#define IR_TEST
 //#define ODOMETRY_TEST
 //#define MOTION_TEST
 
@@ -185,28 +187,88 @@
  * ========================================================================== */
 #ifdef IR_TEST
 
+    #define IR_TEST_PERIOD_MS   50U   /* stream ~20 Hz — readable, not a firehose */
+
+    static void Test_HoldMS(uint32_t ms)
+    {
+        uint32_t ticks = 0U;
+        while (ticks < ms)
+        {
+            if (Timebase_GetAndClear())
+            {
+                ++ticks;
+            }
+        }
+    }
+
+    /* Print one labeled channel: "FL:1234 " */
+    static void IRTest_PrintChannel(const char *label, ir_channel_t ch)
+    {
+        UART_SendString(label);
+        UART_SendString(":");
+        UART_SendUint(IR_GetFiltered(ch));
+        UART_SendByte(' ');
+    }
+
+    static void IRTest_Run(void)
+    {
+        IR_SampleAll();   /* fresh OFF/ON cycle + ambient cancel + filter */
+
+        /* filtered reflected values, one line */
+        IRTest_PrintChannel("FL", IR_FAR_LEFT);
+        IRTest_PrintChannel("L",  IR_LEFT);
+        IRTest_PrintChannel("R",  IR_RIGHT);
+        IRTest_PrintChannel("FR", IR_FAR_RIGHT);
+        UART_CRLF();
+
+        Test_HoldMS(IR_TEST_PERIOD_MS);   /* pace the stream */
+    }
+
 
 #endif /* IR_TEST */
 
-int main(void)
-{   
-    SystemInit();
 
+
+/* ==========================================================================
+ *   Test Init
+ * ========================================================================== */
+
+static void Test_Init(void)
+{
     #ifdef MOTOR_TEST
         Motor_Init();
         Encoder_Init();
         Timebase_Init();
-
-        MotorTest_Run();
     #endif
 
     #ifdef IR_TEST
+        IR_Init();
+        UART_Init();
+        Timebase_Init();
+    #endif
+}
 
+/* ==========================================================================
+ *   Main 
+ * ========================================================================== */
+
+int main(void)
+{   
+    SystemInit();
+    Test_Init();
+
+    #ifdef MOTOR_TEST
+        MotorTest_Run();
     #endif
 
     while(1)
     {
         /* Busy Loop */
+
+        #ifdef IR_TEST
+            IRTest_Run();
+        #endif
+
     }
 
     return 0;

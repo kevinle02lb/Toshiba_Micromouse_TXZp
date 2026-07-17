@@ -139,6 +139,7 @@ void IR_SampleAll(void);
 const ir_sensordata_t* IR_GetData(void);
 uint16_t IR_GetRaw(ir_channel_t ch);
 uint16_t IR_GetReflected(ir_channel_t ch);
+uint16_t IR_GetFiltered(ir_channel_t ch);
 bool IR_IsWallDetected(ir_channel_t ch, uint16_t threshold);
 
 /**

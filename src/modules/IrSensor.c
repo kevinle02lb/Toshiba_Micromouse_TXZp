@@ -93,6 +93,8 @@ static const ir_calpoint_t ir_cal[IR_CAL_POINTS] =
     { 4000,    40 }     /* Near: strong reflection */
 };
 
+
+
 /* ==========================================================================
  *   Wall Detection State
  * ========================================================================== */
@@ -109,8 +111,8 @@ static bool wall_state[IR_COUNT] = {false, false, false, false};
  */
 void IR_Init(void)
 {
-    DMAC_Init();         /* Initialize DMAC */
-    ADC_Init();
+    DMAC_Init();         /* Initialize DMAC-C */
+    ADC_Init();          /* Initialize ADC-C */
     PORT_U_Init();       /* [1] Left emitters  */
     PORT_G_Init();       /* [2] Right emitters */
 }
@@ -256,6 +258,16 @@ uint16_t IR_GetRaw(ir_channel_t ch)
 uint16_t IR_GetReflected(ir_channel_t ch)
 {
     return ir_data.reflected[ch];
+}
+
+/**
+ * @brief  Get filtered ADC value of a channel.
+ * @param  ch  Sensor channel to read.
+ * @return uint16_t  Filtered 12-bit ADC value, right-aligned.
+ */
+uint16_t IR_GetFiltered(ir_channel_t ch)
+{
+    return ir_data.filtered[ch];
 }
 
 /**
