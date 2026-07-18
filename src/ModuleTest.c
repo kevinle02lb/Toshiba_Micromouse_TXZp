@@ -18,13 +18,13 @@
 #include "modules/Motor.h"
 #include "modules/IrSensor.h"   
 #include "drivers/uart.h"
+#include "modules/Motion.h"
 
 /* ==========================================================================
  *   Module Defines
  * ========================================================================== */
 //#define MOTOR_TEST
 #define IR_TEST
-//#define ODOMETRY_TEST
 //#define MOTION_TEST
 
 
@@ -227,6 +227,53 @@
 #endif /* IR_TEST */
 
 
+/* ==========================================================================
+ *   Motion Test
+ * ========================================================================== */
+#ifdef MOTION_TEST
+
+    #define MOTION_TEST_TARGET_CPS   1000.0f   /* modest forward target — well below MOVE_SPEED */
+    #define MOTION_TEST_PRINT_EVERY  20U       /* stream ~50 Hz (every 20th 1 kHz tick) */
+
+    /**
+     * @brief  Closed-loop speed test: command a forward target, stream
+     *         target vs. actual CPS so PID convergence is visible.
+     * @note   Runs forever. Watch actual_L / actual_R climb toward the
+     *         target and settle. If either races away from target instead
+     *         of toward it, the feedback sign is inverted (runaway) —
+     *         kill power. Verify motor signs with MOTOR_TEST first.
+     */
+    static void MotionTest_Run(void)
+    {
+        uint32_t tick = 0U;
+
+        Motion_SetMoveForwardSpeed(MOTION_TEST_TARGET_CPS);
+
+        while (1)
+        {
+            if (Timebase_GetAndClear())
+            {
+                Encoder_Update();    /* feedback must refresh before the loop reads it */
+                Motion_Update();     /* the actual module under test: PID -> motors */
+
+                if (++tick >= MOTION_TEST_PRINT_EVERY)
+                {
+                    tick = 0U;
+
+                    UART_SendString("tgt:");
+                    UART_SendInt((int32_t)MOTION_TEST_TARGET_CPS);
+                    UART_SendString(" L:");
+                    UART_SendInt(Encoder_GetSpeed_CPS(MOTOR_LEFT));
+                    UART_SendString(" R:");
+                    UART_SendInt(Encoder_GetSpeed_CPS(MOTOR_RIGHT));
+                    UART_CRLF();
+                }
+            }
+        }
+    }
+
+#endif /* MOTION_TEST */
+
 
 /* ==========================================================================
  *   Test Init
@@ -245,6 +292,12 @@ static void Test_Init(void)
         UART_Init();
         Timebase_Init();
     #endif
+
+    #ifdef MOTION_TEST
+        Motion_Init();      /* Encoder + Motor internally initailized */
+        UART_Init();
+        Timebase_Init();
+    #endif
 }
 
 /* ==========================================================================
@@ -258,6 +311,10 @@ int main(void)
 
     #ifdef MOTOR_TEST
         MotorTest_Run();
+    #endif
+
+    #ifdef MOTION_TEST
+        MotionTest_Run();
     #endif
 
     while(1)
