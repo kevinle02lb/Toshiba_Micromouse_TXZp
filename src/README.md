@@ -1,4 +1,4 @@
-# 🐭 Toshiba TMPM4KNF10AFG Micromouse
+# 🐭 Toshiba Micromouse — Firmware
 
 > **Work in Progress** — Firmware for an IEEE 16×16 micromouse
 
@@ -28,7 +28,7 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Everything is driven by a single 1 kHz control tick. Each tick runs four stages
 in order; each stage consumes the output of the one above it. The maze planner
@@ -42,7 +42,7 @@ motion and calls the planner for decisions.
 │     if (Timebase_GetAndClear()) {   ◄── 1 kHz tick          │
 │       Encoder_Update();    // read encoders, filter speed   │
 │       Odometry_Update();   // pose (x, y, heading)          │
-│       Motion_Update();     // PID -> motor PWM (never block) │
+│       Motion_Update();     // PID -> motor PWM (never block)│
 │       Navigator_Update();  // plan/turn/drive FSM step      │
 │     }                                                       │
 │   }                                                         │
@@ -78,45 +78,46 @@ motion and calls the planner for decisions.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-TOSHIBAMICRO/
-├── 📂 keil/                     # Keil µVision project files
-├── 📂 pcb/                      # 4-layer KiCad PCB design files
-├── 📂 src/
-│   ├── 📄 main.c                # Entry point, 1 kHz control loop
-│   │
-│   ├── 📂 drivers/              # Register-level hardware layer
-│   │   ├── 📄 timer32A.c/h    # T32A: PWM (ch0/3) + 1 kHz interval (ch1)
-│   │   ├── 📄 gpio.c/h        # Port configuration + emitter GPIO
-│   │   ├── 📄 encoder32A.c/h  # A-ENC32 quadrature hardware read
-│   │   ├── 📄 adc.c/h         # ADC-I units A & C (IR receivers)
-│   │   ├── 📄 dma.c/h         # DMAC-B burst transfer for ADC
-│   │   └── 📄 systick.c/h     # Blocking µs/ms delay (stateless)
-│   │
-│   └── 📂 modules/              # Application logic layer
-│       ├── 📄 Timebase.c/h    # 1 kHz tick flag service
-│       ├── 📄 Encoder.c/h     # Filtered speed + signed position
-│       ├── 📄 Odometry.c/h    # Differential-drive pose (x, y, θ)
-│       ├── 📄 PID.c/h         # Generic PID controller math
-│       ├── 📄 Motor.c/h       # TB67H450 H-bridge direction + duty
-│       ├── 📄 Motion.c/h      # PID speed loop bridging Encoder→Motor
-│       ├── 📄 IrSensor.c/h    # IR sampling, ambient cancel, distance
-│       ├── 📄 FloodFill.c/h   # BFS flood-fill maze planner
-│       └── 📄 Navigator.c/h   # Cell-level motion sequencer (FSM)
-│
-├── 📄 readme.md                 # This file
-└── 📄 .gitignore
+toshiba-micromouse/
+├── keil/                     # Keil µVision project files
+├── pcb/                      # 4-layer KiCad PCB design files
+├── docs/                     # Images and documentation assets
+├── README.md                 # Project landing page
+└── src/
+    ├── README.md             # This file — firmware architecture
+    ├── main.c                # Entry point, 1 kHz control loop
+    │
+    ├── drivers/              # Register-level hardware layer
+    │   ├── timer32A.c/h      # T32A: PWM (ch0/3) + 1 kHz interval (ch1)
+    │   ├── gpio.c/h          # Port configuration + emitter GPIO
+    │   ├── encoder32A.c/h    # A-ENC32 quadrature hardware read
+    │   ├── adc.c/h           # ADC-I units A & C (IR receivers)
+    │   ├── dma.c/h           # DMAC-B burst transfer for ADC
+    │   ├── uart.c/h          # UART-C serial debug output
+    │   └── systick.c/h       # Blocking µs/ms delay (stateless)
+    │
+    └── modules/              # Application logic layer
+        ├── Timebase.c/h      # 1 kHz tick flag service
+        ├── Encoder.c/h       # Filtered speed + signed position
+        ├── Odometry.c/h      # Differential-drive pose (x, y, θ)
+        ├── PID.c/h           # Generic PID controller math
+        ├── Motor.c/h         # TB67H450 H-bridge direction + duty
+        ├── Motion.c/h        # PID speed loop bridging Encoder→Motor
+        ├── IrSensor.c/h      # IR sampling, ambient cancel, distance
+        ├── FloodFill.c/h     # BFS flood-fill maze planner
+        └── Navigator.c/h     # Cell-level motion sequencer (FSM)
 ```
 
 ---
 
-## ⚡ Hardware Specs
+## Hardware Specs
 
 | Component | Part | Interface |
 |-----------|------|-----------|
-| **MCU** | TMPM4KNF10AFG | ARM Cortex-M4, 160 MHz, 5 V |
+| **MCU** | TMPM4KNF10AFG | Arm Cortex-M4, 160 MHz, 5 V |
 | **Motors** | TB67H450AFNG + Pololu #5211 N20 30:1 | T32A PPG PWM @ 40 kHz |
 | **Encoders** | A-ENC32 (on-chip) | Quadrature, 12 CPR × 29.89 ≈ 360/rev |
 | **IR Sensors** | IR LED + phototransistor ×4 | ADC-I + DMA |
@@ -154,7 +155,7 @@ TOSHIBAMICRO/
 
 ---
 
-## 🔧 Timer Configuration
+## Timer Configuration
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -180,7 +181,7 @@ TOSHIBAMICRO/
 
 ---
 
-## 🧭 Navigation Model
+## Navigation Model
 
 `FloodFill` and `Navigator` deliberately use **relative** moves at their
 boundary, so neither needs to agree on an absolute compass:
@@ -193,23 +194,23 @@ boundary, so neither needs to agree on an absolute compass:
 - Odometry is used only to *check* when a turn/drive is complete, never to
   *define* the next target.
 
-> ⚠️ **Load-bearing invariant:** the N→E→S→W cycle must be clockwise in both
+> **Invariant (load-bearing):** the N→E→S→W cycle must be clockwise in both
 > `FloodFill` and `Navigator`'s heading table. Renumbering either breaks turns.
 
 ---
 
-## 🚀 Build & Flash
+## Build & Flash
 
-```bash
-# Open in Keil µVision
-# Target: TMPM4KNF10AFG
-# Debug:  CMSIS-DAP
-# Flash:  On-chip 512 KB
+```text
+IDE:     Keil µVision
+Target:  TMPM4KNF10AFG
+Debug:   CMSIS-DAP
+Flash:   On-chip 512 KB
 ```
 
 ---
 
-## 🎯 Deployment Calibration
+## Deployment Calibration
 
 Before real runs, these must be measured/tuned on the actual robot:
 
@@ -222,26 +223,26 @@ Before real runs, these must be measured/tuned on the actual robot:
 
 ---
 
-## 📝 Module Status
+## Module Status
 
 | Module | Status | Description |
 |--------|--------|-------------|
-| `Timebase` | ✅ Done | 1 kHz control tick flag |
-| `Encoder` | ✅ Done | Filtered speed + signed position |
-| `Odometry` | ✅ Done | Differential-drive pose estimate |
-| `PID` | ✅ Done | Generic PID controller |
-| `Motor` | ✅ Done | H-bridge direction + duty |
-| `Motion` | ✅ Done | PID speed loop (Encoder→Motor) |
-| `IrSensor` | ✅ Done | IR sampling + distance (needs calibration) |
-| `FloodFill` | ✅ Done | BFS flood-fill planner |
-| `Navigator` | 🔄 Bring-up | Motion FSM; verify on hardware |
-
+| `Timebase` | Done | 1 kHz control tick flag |
+| `Encoder` | Done | Filtered speed + signed position |
+| `Odometry` | Done | Differential-drive pose estimate |
+| `PID` | Done | Generic PID controller |
+| `Motor` | Done | H-bridge direction + duty |
+| `Motion` | Done | PID speed loop (Encoder→Motor) |
+| `IrSensor` | Done | IR sampling + distance (needs calibration) |
+| `UART` | Done | Serial debug output (TX) |
+| `FloodFill` | Done | BFS flood-fill planner |
+| `Navigator` | Bring-up | Motion FSM; verify on hardware |
 
 ---
 
-## 📚 References
+## References
 
-- [TMPM4KNF10AFG Datasheet](https://toshiba.semicon-storage.com/)
+- [TMPM4KNF10AFG Product Page](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series/m4k-group.html)
 - [RM-T32A-C Timer Reference](https://toshiba.semicon-storage.com/info/RM-T32A-C_en_20241129.pdf)
 - [RM-A-ENC32-A Encoder Reference](https://toshiba.semicon-storage.com/info/RM-A-ENC32-A_en_20250221.pdf)
 - [RM-ADC-I Reference](https://toshiba.semicon-storage.com/info/RM-ADC-I_en_20251205.pdf)
@@ -250,5 +251,4 @@ Before real runs, these must be measured/tuned on the actual robot:
 
 ---
 
-> **Author:** Kevin Le
-> **Date:** 2026
+**Author:** Kevin Le &nbsp;•&nbsp; 2026
