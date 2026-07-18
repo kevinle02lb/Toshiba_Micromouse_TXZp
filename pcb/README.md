@@ -54,6 +54,26 @@ The mainboard is a custom 4-layer PCB designed in KiCad that carries the full el
 
 ---
 
+## Bench Setup
+
+External equipment used for programming and debug:
+
+<div align="center">
+
+<img src="../docs/assets/swd-debug.jpg" width="300" alt="SWD debug setup"> &nbsp;&nbsp; <img src="../docs/assets/uart-converter.jpg" width="300" alt="USB-UART converter">
+
+*SWD debug via level shifter, and USB-UART for serial logging*
+
+</div>
+
+| Equipment | Purpose |
+|-----------|---------|
+| CMSIS-DAP probe | SWD programming & debug |
+| Logic level shifter | 5 V ↔ 3.3 V for the SWD lines |
+| USB-UART converter | Serial console (115200 8-N-1) over the CH340G/debug UART |
+
+---
+
 ## Schematic
 
 The full schematic is available as a PDF:
@@ -62,13 +82,16 @@ The full schematic is available as a PDF:
 
 ---
 
-## Files
+## Design Files
 
 | File | Contents |
 |------|----------|
-| `*.kicad_sch` | Schematic source |
-| `*.kicad_pcb` | Board layout source |
-| `gerbers/` | Fabrication outputs |
+| [`TMPM4KNF10AFG.kicad_sch`](TMPM4KNF10AFG.kicad_sch) | Schematic source (KiCad) |
+| [`TMPM4KNF10AFG.kicad_pcb`](TMPM4KNF10AFG.kicad_pcb) | Board layout source (KiCad) |
+| [`Schematic.pdf`](Schematic.pdf) | Rendered schematic |
+| [`board.step`](board.step) | 3D board model (STEP) |
+| [`BOM.csv`](BOM.csv) | Bill of materials |
+| [`gerber/`](gerber/) | Fabrication outputs |
 
 ---
 

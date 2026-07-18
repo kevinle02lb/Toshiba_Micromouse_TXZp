@@ -29,7 +29,7 @@ This project implements the entire stack from scratch — custom 4-layer PCB, me
 
 </div>
 
-The TMPM4KNF10AFG comes from the **M4K Group of Toshiba's TXZ+™4A Series** —  160 MHz Cortex-M4F microcontrollers built for motor and inverter control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
+The TMPM4KNF10AFG comes from the **[M4K Group](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series/m4k-group.html)** of Toshiba's **[TXZ+™4A Series](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series.html)** — 160 MHz Cortex-M4F microcontrollers built for motor and inverter control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
 
 | Capability | Role in this build |
 |-----------|--------------------|
