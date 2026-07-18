@@ -235,7 +235,7 @@ Before real runs, these must be measured/tuned on the actual robot:
 | `IrSensor` | ✅ Done | IR sampling + distance (needs calibration) |
 | `FloodFill` | ✅ Done | BFS flood-fill planner |
 | `Navigator` | 🔄 Bring-up | Motion FSM; verify on hardware |
-| `speedRun` | 🔄 Planned | Optimized second-pass path execution |
+
 
 ---
 
