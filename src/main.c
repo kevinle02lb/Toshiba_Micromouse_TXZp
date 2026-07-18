@@ -122,7 +122,7 @@ int main(void)
 		}
 	}
 
-	return 0;                           // unreachable; loop never exits
+	return 0;
 }
 
 
