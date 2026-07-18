@@ -3,7 +3,7 @@
 # 🐭 Toshiba Micromouse
 
 **Autonomous 16×16 Maze-Solving Robot**  
-*Register-level firmware on ARM Cortex-M4F*
+*Register-level firmware on Arm Cortex-M4*
 
 <img src="docs/assets/robot.jpg" width="520" alt="The micromouse robot">
 
@@ -25,15 +25,15 @@ This project implements the entire stack from scratch — custom 4-layer PCB, me
 
 <img src="docs/assets/Toshiba-Logo.png" height="60" alt="Toshiba">
 
-### **Toshiba TMPM4KNF10AFG** — ARM Cortex-M4F
+### **Toshiba TMPM4KNF10AFG** — Arm Cortex-M4 with FPU
 
 </div>
 
-The TMPM4KNF10AFG comes from the **[M4K Group](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series/m4k-group.html)** of Toshiba's **[TXZ+™4A Series](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series.html)** — 160 MHz Cortex-M4F microcontrollers built for motor and inverter control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
+The TMPM4KNF10AFG comes from the **[M4K Group](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series/m4k-group.html)** of Toshiba's **[TXZ+™4A Series](https://toshiba.semicon-storage.com/us/semiconductor/product/microcontrollers/txz4aplus-series.html)** — 160 MHz Arm Cortex-M4 microcontrollers built for motor and inverter control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
 
 | Capability | Role in this build |
 |-----------|--------------------|
-| Cortex-M4F @ 160 MHz + FPU | Navigation, PID, and flood-fill maze solving |
+| Cortex-M4 @ 160 MHz + FPU | Navigation, PID, and flood-fill maze solving |
 | On-chip motor & encoder hardware | Wheel feedback and PPG-generated motor PWM |
 | High-speed analog sensing | IR wall detection |
 
@@ -47,7 +47,7 @@ The same silicon built for industrial three-phase drives runs a smaller-scale pr
 
 | <img src="docs/assets/arm.png" height="40" alt="ARM"> | <img src="docs/assets/Keil.png" height="40" alt="Keil µVision"> | <img src="docs/assets/kicad.png" height="40" alt="KiCad"> | <img src="docs/assets/autodesk-fusion-360_logo_.png" height="40" alt="Fusion 360"> | <img src="docs/assets/git.png" height="40" alt="Git"> |
 |:---:|:---:|:---:|:---:|:---:|
-| **ARM Cortex-M4** | **Keil µVision** | **KiCad** | **Fusion 360** | **Git** |
+| **Arm Cortex-M4** | **Keil µVision** | **KiCad** | **Fusion 360** | **Git** |
 | Register-level C | IDE / Build / Flash | 4-layer PCB | Chassis CAD | Version Control |
 
 </div>
@@ -97,7 +97,7 @@ The same silicon built for industrial three-phase drives runs a smaller-scale pr
 
 ```text
 IDE:     Keil µVision
-Target:  TMPM4KNF10AFG (ARM Cortex-M4F)
+Target:  TMPM4KNF10AFG (Arm Cortex-M4)
 Debug:   CMSIS-DAP
 Flash:   512 KB on-chip
 ```
