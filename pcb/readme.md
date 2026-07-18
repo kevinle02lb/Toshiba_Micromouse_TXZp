@@ -58,7 +58,7 @@ The mainboard is a custom 4-layer PCB designed in KiCad that carries the full el
 
 The full schematic is available as a PDF:
 
-[View schematic (PDF)](schematic.pdf)
+[View schematic (PDF)](Schematic.pdf)
 
 ---
 

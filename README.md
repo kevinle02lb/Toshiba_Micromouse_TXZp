@@ -29,7 +29,7 @@ This project implements the entire stack from scratch — custom 4-layer PCB, me
 
 </div>
 
-The TMPM4KNF10AFG comes from the **M4K Group of Toshiba's TXZ+™ Family (Advanced Class)** — a line of Cortex-M4F microcontrollers built for real-time motor control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
+The TMPM4KNF10AFG comes from the **M4K Group of Toshiba's TXZ+™4A Series** —  160 MHz Cortex-M4F microcontrollers built for motor and inverter control. It pairs a fast floating-point core with dedicated on-chip hardware for driving motors, reading encoders, and sampling analog sensors, and is used across industrial and consumer motion systems such as BLDC/PMSM drives, HVAC compressors, power tools, and factory automation — with IEC 60730 self-diagnosis support for appliance functional safety.
 
 | Capability | Role in this build |
 |-----------|--------------------|
@@ -87,7 +87,7 @@ The same silicon built for industrial three-phase drives runs a smaller-scale pr
 | Path | Contents |
 |------|----------|
 | [`src/README.md`](src/README.md) | Firmware architecture, control loops, pin map, timer config |
-| [`pcb/`](pcb/) | KiCad design files & fabrication outputs |
+| [`pcb/README.md`](pcb/README.md) | Board specs, layout, schematic, component list |
 | [`src/drivers/`](src/drivers/) | Register-level hardware abstraction layer |
 | [`src/modules/`](src/modules/) | Application logic: planner, navigator, controller |
 
