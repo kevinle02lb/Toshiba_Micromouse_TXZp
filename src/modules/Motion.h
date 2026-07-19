@@ -38,4 +38,7 @@ void Motion_SetTurnLeftSpeed(float speed_cps);
 void Motion_SetTurnRightSpeed(float speed_cps);
 void Motion_Stop(void);
 
+float Motion_GetTarget(motor_t motor);      /*!< Commanded speed for a wheel (CPS) */
+float Motion_GetOutput(motor_t motor);      /*!< Last PID output for a wheel, [-100, +100] */
+
 #endif /* MOTION_H */

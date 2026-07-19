@@ -24,8 +24,8 @@
  *   Module Defines
  * ========================================================================== */
 //#define MOTOR_TEST
-#define IR_TEST
-//#define MOTION_TEST
+//#define IR_TEST
+#define MOTION_TEST
 
 
 /* ==========================================================================
@@ -232,20 +232,46 @@
  * ========================================================================== */
 #ifdef MOTION_TEST
 
-    #define MOTION_TEST_TARGET_CPS   1000.0f   /* modest forward target — well below MOVE_SPEED */
-    #define MOTION_TEST_PRINT_EVERY  20U       /* stream ~50 Hz (every 20th 1 kHz tick) */
+    #define MOTION_TEST_TARGET_CPS   300.0f    /* forward target */
+    #define MOTION_TEST_PRINT_EVERY  20U       /* decimation: 1 kHz / 20 = 50 Hz stream */
+
+    /* CSV column order — keep in sync with the MATLAB import */
+    #define MOTION_TEST_CSV_HEADER   "sp,pvL,pvR,mvL,mvR"
+
+    /**
+     * @brief  Emit one telemetry row as bare CSV (no labels) for MATLAB.
+     * @details  Columns: setpoint, PV left, PV right, MV left, MV right.
+     *           PV = filtered wheel speed (CPS). MV = PID output [-100,100],
+     *           truncated to int (integer resolution is fine for spotting
+     *           saturation).
+     */
+    static void MotionTest_StreamCSV(void)
+    {
+        UART_SendInt((int32_t)MOTION_TEST_TARGET_CPS);          /* sp  */
+        UART_SendByte(',');
+        UART_SendInt(Encoder_GetSpeed_CPS(MOTOR_LEFT));         /* pvL */
+        UART_SendByte(',');
+        UART_SendInt(Encoder_GetSpeed_CPS(MOTOR_RIGHT));        /* pvR */
+        UART_SendByte(',');
+        UART_SendInt((int32_t)Motion_GetOutput(MOTOR_LEFT));    /* mvL */
+        UART_SendByte(',');
+        UART_SendInt((int32_t)Motion_GetOutput(MOTOR_RIGHT));   /* mvR */
+        UART_CRLF();
+    }
 
     /**
      * @brief  Closed-loop speed test: command a forward target, stream
-     *         target vs. actual CPS so PID convergence is visible.
-     * @note   Runs forever. Watch actual_L / actual_R climb toward the
-     *         target and settle. If either races away from target instead
-     *         of toward it, the feedback sign is inverted (runaway) —
-     *         kill power. Verify motor signs with MOTOR_TEST first.
+     *         SP / PV / MV so PID convergence is visible in MATLAB.
+     * @note   Runs forever. If a wheel's PV races away from SP instead of
+     *         toward it, the feedback sign is inverted (runaway) — kill power.
+     *         Verify motor signs with MOTOR_TEST first.
      */
     static void MotionTest_Run(void)
     {
         uint32_t tick = 0U;
+
+        UART_SendString(MOTION_TEST_CSV_HEADER);   /* one-time header; readmatrix skips it */
+        UART_CRLF();
 
         Motion_SetMoveForwardSpeed(MOTION_TEST_TARGET_CPS);
 
@@ -254,24 +280,16 @@
             if (Timebase_GetAndClear())
             {
                 Encoder_Update();    /* feedback must refresh before the loop reads it */
-                Motion_Update();     /* the actual module under test: PID -> motors */
+                Motion_Update();     /* PID -> motors */
 
                 if (++tick >= MOTION_TEST_PRINT_EVERY)
                 {
                     tick = 0U;
-
-                    UART_SendString("tgt:");
-                    UART_SendInt((int32_t)MOTION_TEST_TARGET_CPS);
-                    UART_SendString(" L:");
-                    UART_SendInt(Encoder_GetSpeed_CPS(MOTOR_LEFT));
-                    UART_SendString(" R:");
-                    UART_SendInt(Encoder_GetSpeed_CPS(MOTOR_RIGHT));
-                    UART_CRLF();
+                    MotionTest_StreamCSV();
                 }
             }
         }
     }
-
 #endif /* MOTION_TEST */
 
 
