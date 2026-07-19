@@ -1,20 +1,19 @@
 /**
  * @file        PID.c
  * @brief       PID controller
- * @version     V1.1.0
- * @date        18-07-2026
+ * @version     V1.0.0
+ * @date        18-06-2026
  *
  * @details
- *   Formula:  output (MV) = (kp * error) + (ki * integral) + (kd * derivative)
+ * 
+ *   Formula:  output (MV) = (kp * error) + (ki * integral) + (kd * derivivative)
  *   MV = manipulated variable
- *
+ * 
  *   error = e(t) = SP - PV
  *   Setpoint (SP)
  *   Process Variable (PV)
- *
- *   Derivative runs on PV, not error, so a setpoint step doesn't spike it.
- *   D term is low-pass filtered (PID_D_FILTER_ALPHA) against encoder noise.
- *
+ * 
+ * 
  * @note
  *   File structure and Doxygen formatting assisted by AI.
  *
@@ -66,9 +65,7 @@ void PID_Init(pid_t *pid, float kp, float ki, float kd, float dt, float out_min,
 
     pid->integral = 0.0f;
     pid->derivative = 0.0f;
-    pid->prev_measurement = 0.0f;
-    pid->d_filtered = 0.0f;
-    pid->first_run = true;
+    pid->prev_error = 0.0f;
 }
 
 
@@ -79,38 +76,25 @@ void PID_Init(pid_t *pid, float kp, float ki, float kd, float dt, float out_min,
 /**
  * @brief  Reset the PID controller state
  * @param  pid  Pointer to pid_t structure
- * @note  Clears integral, derivative, and re-arms first_run so the next
- *        update seeds prev_measurement instead of spiking the D term
+ * @note  Resets integral, deriviative, and previous error to zero
  */
 void PID_Reset(pid_t *pid)
 {
     pid->integral = 0.0f;
     pid->derivative = 0.0f;
-    pid->prev_measurement = 0.0f;
-    pid->d_filtered = 0.0f;
-    pid->first_run = true;
+    pid->prev_error = 0.0f;
 }
 
 
-/**
- * @brief  Run one PID tick
- * @param  pid          Pointer to pid_t structure
- * @param  setpoint     Target value (SP)
- * @param  measurement  Actual value (PV)
- * @return              Clamped output in [out_min, out_max]
- */
-float PID_Update(pid_t *pid, float setpoint, float measurement)
-{
-    float error = setpoint - measurement;
-    float proportional_term, integral_term, derivative_term, output;
-    float d_raw;
 
-    // Seed PV history on first tick so derivative starts at 0
-    if (pid->first_run)
-    {
-        pid->prev_measurement = measurement;
-        pid->first_run = false;
-    }
+/**
+ * @brief  
+ * @param  pid  
+ * @note  
+ */
+float PID_Update(pid_t *pid, float error)
+{
+    float proportional_term, integral_term, derivative_term, output;
 
     // [1] Proportional
     proportional_term = pid->kp * error;
@@ -131,14 +115,12 @@ float PID_Update(pid_t *pid, float setpoint, float measurement)
 
     integral_term = pid->ki * pid->integral;
 
-    // [3] Derivative on measurement (negated), low-pass filtered
-    d_raw = -(measurement - pid->prev_measurement) / pid->dt;
-    pid->d_filtered += PID_D_FILTER_ALPHA * (d_raw - pid->d_filtered);
-    pid->derivative = pid->d_filtered;
-    derivative_term = pid->kd * pid->d_filtered;
+    // [3] Derivative (rate of change of error)
+    pid->derivative = (error - pid->prev_error) / pid->dt;
+    derivative_term = pid->kd * pid->derivative;
 
-    // [4] Save measurement for next tick's derivative
-    pid->prev_measurement = measurement;
+    // [4] Save error for next tick's derivative
+    pid->prev_error = error;
 
     // [5] Sum and clamp
     output = proportional_term + integral_term + derivative_term;
@@ -154,8 +136,8 @@ float PID_Update(pid_t *pid, float setpoint, float measurement)
 
 /**
  * @brief  Calculates error as Setpoint - Process Variable
- * @param  SP  Target speed (CPS)
- * @param  PV  Actual speed (CPS)
+ * @param  SP  Pointer to target speed (CPS)
+ * @param  PV  Pointer to actual speed (CPS)
  * @return     Error value (SP - PV)
  */
 float CalculateError(float SP, float PV)
