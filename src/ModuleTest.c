@@ -235,17 +235,17 @@
     #define MOTION_TEST_TARGET_CPS   500.0f    /* forward target */
     #define MOTION_TEST_PRINT_EVERY  20U       /* decimation: 1 kHz / 20 = 50 Hz stream */
 
-    /* CSV column order — keep in sync with the MATLAB import */
-    #define MOTION_TEST_CSV_HEADER   "sp,pvL,pvR,mvL,mvR"
+    /* Column order — keep in sync with the MATLAB import */
+    #define MOTION_TEST_HEADER   "sp,pvL,pvR,mvL,mvR"
 
     /**
-     * @brief  Emit one telemetry row as bare CSV (no labels) for MATLAB.
+     * @brief  Emit one telemetry row as comma-separated text (no labels).
      * @details  Columns: setpoint, PV left, PV right, MV left, MV right.
      *           PV = filtered wheel speed (CPS). MV = PID output [-100,100],
      *           truncated to int (integer resolution is fine for spotting
      *           saturation).
      */
-    static void MotionTest_StreamCSV(void)
+    static void MotionTest_StreamRow(void)
     {
         UART_SendInt((int32_t)MOTION_TEST_TARGET_CPS);          /* sp  */
         UART_SendByte(',');
@@ -270,7 +270,7 @@
     {
         uint32_t tick = 0U;
 
-        UART_SendString(MOTION_TEST_CSV_HEADER);   /* one-time header; readmatrix skips it */
+        UART_SendString(MOTION_TEST_HEADER);   /* one-time header; MATLAB skips it */
         UART_CRLF();
 
         Motion_SetMoveForwardSpeed(MOTION_TEST_TARGET_CPS);
@@ -285,7 +285,7 @@
                 if (++tick >= MOTION_TEST_PRINT_EVERY)
                 {
                     tick = 0U;
-                    MotionTest_StreamCSV();
+                    MotionTest_StreamRow();
                 }
             }
         }
