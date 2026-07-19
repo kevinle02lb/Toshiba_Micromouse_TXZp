@@ -232,7 +232,7 @@
  * ========================================================================== */
 #ifdef MOTION_TEST
 
-    #define MOTION_TEST_TARGET_CPS   300.0f    /* forward target */
+    #define MOTION_TEST_TARGET_CPS   500.0f    /* forward target */
     #define MOTION_TEST_PRINT_EVERY  20U       /* decimation: 1 kHz / 20 = 50 Hz stream */
 
     /* CSV column order — keep in sync with the MATLAB import */

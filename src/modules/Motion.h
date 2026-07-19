@@ -22,8 +22,8 @@
 #include "Motor.h"
 
 /* User Changeable Speed */
-#define TURN_SPEED              430         /*!< Turn Speed in CPS */
-#define MOVE_SPEED              215         /*!< Move forward Speed in CPS */
+#define TURN_SPEED              300         /*!< Turn Speed in CPS */
+#define MOVE_SPEED              600         /*!< Move forward Speed in CPS */
 
 #define MOTION_DEADZONE         0.5f
 #define MOTION_ROUND_OFFSET     0.5f
