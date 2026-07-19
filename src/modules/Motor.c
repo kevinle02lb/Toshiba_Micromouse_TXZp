@@ -51,11 +51,11 @@ static motor_dir_t motor_right_dir = STOP;
  * @param  period  Timer period in counts
  * @return Duty value in [0, period-1]
  */
-static inline uint16_t Speed_ToDuty(uint8_t speed, uint16_t period)
+static uint16_t Speed_ToDuty(uint8_t speed, uint16_t period)
 {
     if (speed >= MAX_SPEED)
     {
-        return (uint16_t)(period - 1U);
+        return 0;
     }
 
     return (uint16_t)(period - 1U - ((uint32_t)speed * (uint32_t)(period - 1U) / (uint32_t)MAX_SPEED));     /* Inverted: Period - duty ticks */
