@@ -26,6 +26,7 @@
 #include "FloodFill.h"
 #include "Motion.h"
 #include "Odometry.h"
+#include "Encoder.h"
 #include <math.h>
 
 /* ==========================================================================
@@ -116,8 +117,8 @@ static void BeginDrive(void)
     drive_start_x_mm = Odometry_GetX_mm();
     drive_start_y_mm = Odometry_GetY_mm();
 
-    drive_start_countL = Encoder_GetCount(MOTOR_LEFT);
-    drive_start_countR = Encoder_GetCount(MOTOR_RIGHT);
+    drive_start_countL = Encoder_GetPosition(MOTOR_LEFT);
+    drive_start_countR = Encoder_GetPosition(MOTOR_RIGHT);  
 
     Motion_SetMoveForwardSpeed(MOVE_SPEED);
     nav_state = NAV_DRIVING;
@@ -222,13 +223,13 @@ void Navigator_Update(void)
             float dist_traveled = sqrtf((dx * dx) + (dy * dy));
 
             /* Error calculation to travel of traveling stright */
-            int32_t dL = Encoder_GetCount(MOTOR_LEFT)  - drive_start_countL;
-            int32_t dR = Encoder_GetCount(MOTOR_RIGHT) - drive_start_countR;
+            int32_t dL = Encoder_GetPosition(MOTOR_LEFT)  - drive_start_countL;
+            int32_t dR = Encoder_GetPosition(MOTOR_RIGHT) - drive_start_countR;
 
             float err  = (float)(dR - dL);        /* >0 → right ran farther → veering LEFT */
             float corr = KP_STRAIGHT * err;
 
-            Motion_SetWheelSpeeds(MOVE_SPEED + corr, MOVE_SPEED - corr);
+            Motion_SetSpeed(MOVE_SPEED + corr, MOVE_SPEED - corr);
 
             /* Distance Check */
             if (dist_traveled >= (CELL_SIZE_MM - DIST_TOLERANCE_MM))
