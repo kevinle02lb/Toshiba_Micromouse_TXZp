@@ -99,7 +99,7 @@ float PID_Update(pid_t *pid, float error)
     // [1] Proportional
     proportional_term = pid->kp * error;
 
-    // [2] Integral (accumulate, then clamp to spendable range)
+    // [2] Integral (accumulate, then clamp to desired range)
     pid->integral += error * pid->dt;
 
     if (pid->ki != 0.0f)                             // skip clamp math if I-term unused
