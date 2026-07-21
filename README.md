@@ -106,6 +106,5 @@ Flash:   512 KB on-chip
 
 <div align="center">
 
-**Kevin Le** &nbsp;•&nbsp; 2026 &nbsp;•&nbsp; Work in Progress
-
+**Kevin Le** &nbsp;•&nbsp; 2026 &nbsp;•&nbsp;
 </div>
