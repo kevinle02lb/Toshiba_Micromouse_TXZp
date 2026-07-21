@@ -60,7 +60,7 @@ External equipment used for programming and debug:
 
 <div align="center">
 
-<img src="../docs/assets/cmsis_txb104.jpg" width="300" alt="SWD debug setup"> &nbsp;&nbsp; <img src="../docs/assets/usb_ttl.jpg" width="300" alt="USB-UART converter">
+<img src="../docs/assets/cmsis_txb104.JPG" width="300" alt="SWD debug setup"> &nbsp;&nbsp; <img src="../docs/assets/usb_ttl.JPG" width="300" alt="USB-UART converter">
 
 *SWD debug via level shifter, and USB-UART for serial logging*
 
