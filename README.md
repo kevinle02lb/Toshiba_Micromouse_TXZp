@@ -74,7 +74,7 @@ The same silicon built for industrial three-phase drives runs a smaller-scale pr
 
 <br>
 
-<img src="docs/assets/fusion_robot.png" width="480" alt="Fusion 360 Robot Render">
+<img src="docs/assets/micromouse_fusion.gif" width="480" alt="Fusion 360 Robot Render">
 
 *Fusion 360 render of the full mechanical assembly*
 
